@@ -4,7 +4,7 @@
 
 Below is a diagram illustrating our AWS infrastructure architecture:
 
-![AWS Infrastructure Architecture](./aws_infrastructure_architecture.png)
+![AWS Infrastructure Architecture](https://github.com/cloudon-one/aws-terragrunt-configuration/blob/main/aws/aws-landing-zone.png)
 
 This diagram provides an overview of our AWS account structure and the services deployed across different organizational units (OUs):
 
@@ -17,7 +17,6 @@ This diagram provides an overview of our AWS account structure and the services 
 
 Each account and environment is managed through this Terragrunt repository, allowing for consistent and controlled infrastructure deployment across our entire AWS organization.
 
-[... rest of the content remains unchanged ...]
 
 ## Prerequisites
 
