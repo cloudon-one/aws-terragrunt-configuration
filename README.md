@@ -1,7 +1,5 @@
 # Terragrunt Infrastructure Repository
 
-[... previous content remains unchanged ...]
-
 ## Prerequisites
 
 Before you can use this Terragrunt repository, ensure you have the following tools installed:
