@@ -1,0 +1,674 @@
+inputs:
+- bucket_name: "amit-tests"
+  tags:
+    ENV: "test"
+    Owner: "Amit"
+
+- bucket_name: "anael-new-example-lambda"
+  tags:
+    crossplane-providerconfig: "provider-aws-family"
+    crossplane-kind: "bucket.s3.aws.upbound.io"
+    crossplane-name: "anael-new-example-lambda-nqfbt-t47b7"
+    ManagedByCrossplane: "true"
+
+- bucket_name: "anael-test-s3-lambda"
+  tags:
+    Name: "anael-test-s3-lambda"
+
+- bucket_name: "aws-sam-cli-managed-default-samclisourcebucket-ax98t2mqnkct"
+  tags:
+    aws:cloudformation:stack-name: "aws-sam-cli-managed-default"
+    aws:cloudformation:logical-id: "SamCliSourceBucket"
+    ManagedStackSource: "AwsSamCli"
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/aws-sam-cli-managed-default/adad9fd0-c349-11ee-a600-0adbd32819a3"
+
+- bucket_name: "benjamin-mlflow-test"
+  tags:
+    Name: "benjamin-mlflow-test"
+
+- bucket_name: "cf-templates-zctl0suuinc40-eu-west-1"
+  tags:
+    Name: "cf-templates-zctl0suuinc40-eu-west-1"
+
+- bucket_name: "daniel-tests-eu-west-1-gh-dev"
+  tags:
+    Name: "daniel-tests-eu-west-1-gh-dev"
+
+- bucket_name: "datadog-serverless-macro-macrofunctionzipsbucket-1hbj1awvc9qps"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/datadog-serverless-macro/15a1f950-a083-11ed-b21b-064fd3519b19"
+    aws:cloudformation:stack-name: "datadog-serverless-macro"
+    aws:cloudformation:logical-id: "MacroFunctionZipsBucket"
+
+- bucket_name: "datadogintegration-forwarderstack-forwarderbucket-9d8rggv0sb0x"
+  tags:
+    Name: "datadogintegration-forwarderstack-forwarderbucket-9d8rggv0sb0x"
+
+- bucket_name: "datadogintegration-forwarderstack-forwarderbucket-rb1huwjhosda"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/DatadogIntegration-ForwarderStack-1INRWP0XTD3XG/a82b4220-a0b7-11ed-9c5f-0a0b047d713b"
+    aws:cloudformation:stack-name: "DatadogIntegration-ForwarderStack-1INRWP0XTD3XG"
+    aws:cloudformation:logical-id: "ForwarderBucket"
+
+- bucket_name: "emile-temp"
+  tags:
+    Name: "emile-temp"
+
+- bucket_name: "env-company-terraform-state"
+  tags:
+    Name: "env-company-terraform-state"
+
+- bucket_name: "fido-gh-dev-test-tf-state-001"
+  tags:
+    Name: "fido-gh-dev-test-tf-state-001"
+
+- bucket_name: "gh-dev-addresses"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "addresses"
+
+- bucket_name: "gh-dev-applications"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "applications"
+
+- bucket_name: "gh-dev-applications-review"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "applications-review"
+
+- bucket_name: "gh-dev-ballerine-document-labeling-results"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Doron"
+    Description: "For Saving labeling job result"
+    Terraform: "true"
+    Name: "gh-dev-ballerine-document-labeling-results"
+
+- bucket_name: "gh-dev-banking-service-api-keys"
+  tags:
+    Name: "gh-dev-banking-service-api-keys"
+
+- bucket_name: "gh-dev-business-loan-document-labeling-job-annotation-output"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: " business-loan-document labeling output S3 Bucket"
+    Terraform: "true"
+    Name: "business-loan-document-labeling-job-annotation-output"
+
+- bucket_name: "gh-dev-business-loan-document-labeling-job-input"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "business-loan-Document input Labeling backend S3 Storage"
+    Terraform: "true"
+    Name: "gh-dev-business-loan-document-labeling-job-input"
+
+- bucket_name: "gh-dev-business-survey-answers"
+  tags:
+    Name: "gh-dev-business-survey-answers"
+
+- bucket_name: "gh-dev-business-verification-documents"
+  tags:
+    Name: "gh-dev-business-verification-documents"
+
+- bucket_name: "gh-dev-clevertap"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "S3 bucket for gh-dev-clevertap kinesis-firehose backup"
+    Name: "gh-dev-clevertap"
+
+- bucket_name: "gh-dev-configs"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "configs"
+
+- bucket_name: "gh-dev-data-tasks"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/GlobalDataResources-gh-dev/767aa740-9ca5-11ed-abf5-0a6ded9dbc97"
+    aws:cloudformation:stack-name: "GlobalDataResources-gh-dev"
+    aws:cloudformation:logical-id: "S3DataTasksBucket"
+
+- bucket_name: "gh-dev-devops-keys"
+  tags:
+    Name: "gh-dev-devops-keys"
+
+- bucket_name: "gh-dev-discounts"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "gh-dev-discounts"
+
+- bucket_name: "gh-dev-document-classification"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Adi Stern"
+    Description: "document-classification S3 bucket"
+    Name: "document-classification"
+
+- bucket_name: "gh-dev-document-labeling-job-annotation-output"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: " document labeling output S3 Bucket"
+    Terraform: "true"
+    Name: "document-labeling-job-annotation-output"
+
+- bucket_name: "gh-dev-document-labeling-job-input"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Document input Labeling backend S3 Storage"
+    Terraform: "true"
+    Name: "gh-dev-document-labeling-job-input"
+
+- bucket_name: "gh-dev-experiments"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Odelia"
+    Description: "Backend S3 bucket"
+    Name: "gh-dev-experiments"
+
+- bucket_name: "gh-dev-external-services-responses"
+  tags:
+    Name: "gh-dev-external-services-responses"
+
+- bucket_name: "gh-dev-feature-store"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/FidoModelDaily-gh-dev/fec9bda0-d725-11ee-9d31-0e5ec215c1e5"
+    aws:cloudformation:stack-name: "FidoModelDaily-gh-dev"
+    aws:cloudformation:logical-id: "FeatureStoreBucket"
+
+- bucket_name: "gh-dev-fido-biz-documents"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "fido-biz-documents"
+
+- bucket_name: "gh-dev-fraud-results"
+  tags:
+    Name: "gh-dev-fraud-results"
+
+- bucket_name: "gh-dev-goods"
+  tags:
+    Name: "gh-dev-goods"
+
+- bucket_name: "gh-dev-kinesis-events-test"
+  tags:
+    Name: "gh-dev-kinesis-events-test"
+
+- bucket_name: "gh-dev-kyc-large-payload"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "kyc-large-payload Backend S3 bucket"
+    Name: "gh-dev-kyc-large-payload"
+
+- bucket_name: "gh-dev-kyc-service-api-keys"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Noam Waissman"
+    Description: "kyc S3 bucket"
+    Name: "kyc-service-api-keys"
+
+- bucket_name: "gh-dev-labeling-job-annotation-result"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "For Saving labeling job result"
+    Terraform: "true"
+    Name: "gh-dev-labeling-job-annotation-result"
+
+- bucket_name: "gh-dev-lambda-freshsales-upload-deals-source-code"
+  tags:
+    Name: "gh-dev-lambda-freshsales-upload-deals-source-code"
+
+- bucket_name: "gh-dev-lambda-persist-analytic-events-to-mongo-source-code"
+  tags:
+    Name: "gh-dev-lambda-persist-analytic-events-to-mongo-source-code"
+
+- bucket_name: "gh-dev-margins-raw"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Save Margins raw responses Backend S3 bucket"
+    Terraform: "true"
+    Name: "margins-raw"
+
+- bucket_name: "gh-dev-migrations-resources"
+  tags:
+    Environment: "gh-dev"
+    Owner: "noam waissman"
+    Description: "backend migrations resources s3 bucket"
+    Name: "gh-dev-migrations-resources"
+
+- bucket_name: "gh-dev-mlflow-models"
+  tags:
+    Name: "gh-dev-mlflow-models"
+
+- bucket_name: "gh-dev-mobiledata"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Loan Backend S3 bucket"
+    Name: "mobiledata"
+
+- bucket_name: "gh-dev-model-training"
+  tags:
+    Name: "gh-dev-model-training"
+
+- bucket_name: "gh-dev-mono"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Mono backend S3 Storage"
+    Name: "gh-dev-mono"
+
+- bucket_name: "gh-dev-my-pretty-bucket"
+  tags:
+    Name: "gh-dev-my-pretty-bucket"
+
+- bucket_name: "gh-dev-odelya"
+  tags:
+    Name: "gh-dev-odelya"
+
+- bucket_name: "gh-dev-partnerships-users-details"
+  tags:
+    Name: "gh-dev-partnerships-users-details"
+
+- bucket_name: "gh-dev-pse"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Loan Backend S3 bucket"
+    Name: "pse"
+
+- bucket_name: "gh-dev-reset-pincode-resources"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "reset-pincode-resources bucket "
+    Name: "reset-pincode-resources"
+
+- bucket_name: "gh-dev-risk-data"
+  tags:
+    Name: "gh-dev-risk-data"
+
+- bucket_name: "gh-dev-risk-engine-features"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/GlobalDataResources-gh-dev/767aa740-9ca5-11ed-abf5-0a6ded9dbc97"
+    aws:cloudformation:stack-name: "GlobalDataResources-gh-dev"
+    aws:cloudformation:logical-id: "RiskEngineFeaturesBucket"
+
+- bucket_name: "gh-dev-risk-engine-l0-v2-layers"
+  tags:
+    Name: "gh-dev-risk-engine-l0-v2-layers"
+
+- bucket_name: "gh-dev-risk-feature-store"
+  tags:
+    Name: "gh-dev-risk-feature-store"
+
+- bucket_name: "gh-dev-risk-model"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Data Backend S3 bucket"
+    Name: "gh-dev-risk-model"
+
+- bucket_name: "gh-dev-risk-pipeline-results"
+  tags:
+    Name: "gh-dev-risk-pipeline-results"
+
+- bucket_name: "gh-dev-sagemaker"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/GlobalDataResources-gh-dev/767aa740-9ca5-11ed-abf5-0a6ded9dbc97"
+    aws:cloudformation:stack-name: "GlobalDataResources-gh-dev"
+    aws:cloudformation:logical-id: "S3SagemakerBucket"
+
+- bucket_name: "gh-dev-sagemaker-fake-selfie-results"
+  tags:
+    Name: "gh-dev-sagemaker-fake-selfie-results"
+
+- bucket_name: "gh-dev-sam-deployment"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Sinai Yoktan"
+    Description: "Data Backend S3 bucket"
+    Name: "sam-deployment"
+
+- bucket_name: "gh-dev-savings-sanctions"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "gh-dev-savings-sanctions"
+
+- bucket_name: "gh-dev-shahaf-test-hello-source-code"
+  tags:
+    Name: "gh-dev-shahaf-test-hello-source-code"
+
+- bucket_name: "gh-dev-sms-remarketing-archive"
+  tags:
+    Environment: "gh-dev"
+    Owner: "sedem"
+    Description: "Backend S3 bucket"
+    Name: "sms-remarketing-archive"
+
+- bucket_name: "gh-dev-survey-answers"
+  tags:
+    Name: "gh-dev-survey-answers"
+
+- bucket_name: "gh-dev-terraform-state"
+  tags:
+    Name: "gh-dev-terraform-state"
+
+- bucket_name: "gh-dev-user-management-service-api-keys"
+  tags:
+    Name: "gh-dev-user-management-service-api-keys"
+
+- bucket_name: "gh-dev-user-management-service-kyc-resources"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "user-management-service-kyc-resources"
+
+- bucket_name: "gh-dev-user-management-service-profile-pictures"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "user-management-service-profile-pictures"
+
+- bucket_name: "gh-dev-user-management-service-public-resources"
+  tags:
+    Environment: "gh-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 Bucket"
+    Name: "user-management-service-public-resources"
+
+- bucket_name: "labeling-output-test-benjamin"
+  tags:
+    Name: "labeling-output-test-benjamin"
+
+- bucket_name: "mlflow-sagemaker-eu-west-1-139927489895"
+  tags:
+    Name: "mlflow-sagemaker-eu-west-1-139927489895"
+
+- bucket_name: "mp-forwarding-gh-dev"
+  tags:
+    Name: "mp-forwarding-gh-dev"
+
+- bucket_name: "s3-anael-new"
+  tags:
+    crossplane-providerconfig: "provider-aws-family"
+    crossplane-kind: "bucket.s3.aws.upbound.io"
+    crossplane-name: "s3-anael-new"
+
+- bucket_name: "sa-dev-terraform-state"
+  tags:
+    Name: "sa-dev-terraform-state"
+
+- bucket_name: "sagemaker-eu-west-1-139927489895"
+  tags:
+    Name: "sagemaker-eu-west-1-139927489895"
+
+- bucket_name: "shahaf-new-example"
+  tags:
+    crossplane-providerconfig: "provider-aws-family"
+    crossplane-kind: "bucket.s3.aws.upbound.io"
+    crossplane-name: "my-lambda-function-vp24l-9c7d6"
+    ManagedByCrossplane: "true"
+
+- bucket_name: "shahaf-new-example-lambda"
+  tags:
+    crossplane-providerconfig: "provider-aws-family"
+    crossplane-kind: "bucket.s3.aws.upbound.io"
+    crossplane-name: "shahaf-new-example-lambda-v8mf5"
+    ManagedByCrossplane: "true"
+
+- bucket_name: "shahaf-test-bucket"
+  tags:
+    crossplane-providerconfig: "provider-aws-family"
+    crossplane-kind: "bucket.s3.aws.upbound.io"
+    crossplane-name: "shahaf-test-bucket"
+
+- bucket_name: "shahaf-test-hello"
+  tags:
+    Service: "shahaf-service"
+    Department: "Platform"
+
+- bucket_name: "ug-dev-addresses"
+  tags:
+    Name: "ug-dev-addresses"
+
+- bucket_name: "ug-dev-applications"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "applications"
+
+- bucket_name: "ug-dev-applications-review"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "applications-review"
+
+- bucket_name: "ug-dev-ballerine-document-labeling-results"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Doron"
+    Description: "For Saving labeling job result"
+    Terraform: "true"
+    Name: "ug-dev-ballerine-document-labeling-results"
+
+- bucket_name: "ug-dev-banking-service-api-keys"
+  tags:
+    Name: "ug-dev-banking-service-api-keys"
+
+- bucket_name: "ug-dev-business-survey-answers"
+  tags:
+    Name: "ug-dev-business-survey-answers"
+
+- bucket_name: "ug-dev-business-verification-documents"
+  tags:
+    Name: "ug-dev-business-verification-documents"
+
+- bucket_name: "ug-dev-clevertap"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "S3 bucket for ug-dev-clevertap kinesis-firehose backup"
+    Name: "ug-dev-clevertap"
+
+- bucket_name: "ug-dev-configs"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "configs"
+
+- bucket_name: "ug-dev-data-tasks"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/GlobalDataResources-ug-dev/243d2e60-bc23-11ed-8dd9-0ada2901b2b1"
+    aws:cloudformation:stack-name: "GlobalDataResources-ug-dev"
+    aws:cloudformation:logical-id: "S3DataTasksBucket"
+
+- bucket_name: "ug-dev-discounts"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "ug-dev-discounts"
+
+- bucket_name: "ug-dev-document-classification"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Adi Stern"
+    Description: "document-classification S3 bucket"
+    Name: "document-classification"
+
+- bucket_name: "ug-dev-document-labeling-job-annotation-output"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: " document labeling output S3 Bucket"
+    Terraform: "true"
+    Name: "document-labeling-job-annotation-output"
+
+- bucket_name: "ug-dev-document-labeling-job-input"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "Document input Labeling backend S3 Storage"
+    Terraform: "true"
+    Name: "ug-dev-document-labeling-job-input"
+
+- bucket_name: "ug-dev-experiments"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Odelia"
+    Description: "Backend S3 bucket"
+    Name: "ug-dev-experiments"
+
+- bucket_name: "ug-dev-external-services-responses"
+  tags:
+    Name: "ug-dev-external-services-responses"
+
+- bucket_name: "ug-dev-feature-store"
+  tags:
+    Name: "ug-dev-feature-store"
+
+- bucket_name: "ug-dev-fido-biz-documents"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "fido-biz-documents"
+
+- bucket_name: "ug-dev-fraud-results"
+  tags:
+    Name: "ug-dev-fraud-results"
+
+- bucket_name: "ug-dev-gnu-grid-user-info"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "gnu-grid-user-info Backend S3 bucket"
+    UsedByUserManagement: "true"
+    Name: "ug-dev-gnu-grid-user-info"
+
+- bucket_name: "ug-dev-kyc-service-api-keys"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Noam Waissman"
+    Description: "kyc S3 bucket"
+    Name: "kyc-service-api-keys"
+
+- bucket_name: "ug-dev-lambda-freshsales-upload-deals-source-code"
+  tags:
+    Name: "ug-dev-lambda-freshsales-upload-deals-source-code"
+
+- bucket_name: "ug-dev-lambda-persist-analytic-events-to-mongo-source-code"
+  tags:
+    Name: "ug-dev-lambda-persist-analytic-events-to-mongo-source-code"
+
+- bucket_name: "ug-dev-migrations-resources"
+  tags:
+    Environment: "ug-dev"
+    Owner: "noam waissman"
+    Description: "backend migrations resources s3 bucket"
+    Name: "ug-dev-migrations-resources"
+
+- bucket_name: "ug-dev-mobiledata"
+  tags:
+    Name: "ug-dev-mobiledata"
+
+- bucket_name: "ug-dev-model-training"
+  tags:
+    Name: "ug-dev-model-training"
+
+- bucket_name: "ug-dev-risk-data"
+  tags:
+    Name: "ug-dev-risk-data"
+
+- bucket_name: "ug-dev-risk-engine-features"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/GlobalDataResources-ug-dev/243d2e60-bc23-11ed-8dd9-0ada2901b2b1"
+    aws:cloudformation:stack-name: "GlobalDataResources-ug-dev"
+    aws:cloudformation:logical-id: "RiskEngineFeaturesBucket"
+
+- bucket_name: "ug-dev-risk-model"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "Data Backend S3 bucket"
+    Name: "ug-dev-risk-model"
+
+- bucket_name: "ug-dev-risk-pipeline-results"
+  tags:
+    Name: "ug-dev-risk-pipeline-results"
+
+- bucket_name: "ug-dev-sagemaker"
+  tags:
+    aws:cloudformation:stack-id: "arn:aws:cloudformation:eu-west-1:139927489895:stack/GlobalDataResources-ug-dev/243d2e60-bc23-11ed-8dd9-0ada2901b2b1"
+    aws:cloudformation:stack-name: "GlobalDataResources-ug-dev"
+    aws:cloudformation:logical-id: "S3SagemakerBucket"
+
+- bucket_name: "ug-dev-sagemaker-fake-selfie-results"
+  tags:
+    Name: "ug-dev-sagemaker-fake-selfie-results"
+
+- bucket_name: "ug-dev-sam-deployment"
+  tags:
+    Name: "ug-dev-sam-deployment"
+
+- bucket_name: "ug-dev-selfies-for-labeling-task"
+  tags:
+    Name: "ug-dev-selfies-for-labeling-task"
+
+- bucket_name: "ug-dev-selfies-for-labeling-task-output"
+  tags:
+    Name: "ug-dev-selfies-for-labeling-task-output"
+
+- bucket_name: "ug-dev-shahaf-test-hello-source-code"
+  tags:
+    Name: "ug-dev-shahaf-test-hello-source-code"
+
+- bucket_name: "ug-dev-survey-answers"
+  tags:
+    Name: "ug-dev-survey-answers"
+
+- bucket_name: "ug-dev-user-management-service-api-keys"
+  tags:
+    Name: "ug-dev-user-management-service-api-keys"
+
+- bucket_name: "ug-dev-user-management-service-kyc-resources"
+  tags:
+    Environment: "ug-dev"
+    Owner: "Dor Hanegby"
+    Description: "Backend S3 bucket"
+    Name: "user-management-service-kyc-resources"
+
+- bucket_name: "ug-dev-user-management-service-profile-pictures"
+  tags:
+    Name: "ug-dev-user-management-service-profile-pictures"
+
+- bucket_name: "y-data-fido-project"
+  tags:
+    Name: "y-data-fido-project"
+
