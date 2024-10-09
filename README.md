@@ -1,4 +1,5 @@
-# Terragrunt Infrastructure Repository
+# AWS Terragrunt Landing Zone
+
 
 ## Prerequisites
 
