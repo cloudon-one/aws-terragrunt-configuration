@@ -10,7 +10,7 @@ This diagram provides an overview of our AWS account structure and the services 
 
 - **Management OU**: Contains the Management Account for overall AWS organization management, including AWS Organizations, IAM, and billing.
 - **Network Account**: Houses core networking components like VPCs, Transit Gateway, and VPN connections.
-- **Shared-svc Account**: Provides shared services like a VPC and EKS cluster used across the organization.
+- **Shared-Services Account**: Provides shared services like a VPC and EKS cluster used across the organization.
 - **Security OU**: Includes accounts dedicated to security services such as GuardDuty, Config, and CloudTrail.
 - **Production OU**: Contains separate accounts for US and EU production environments, each with its own VPC, EKS cluster, databases, and other services.
 - **Development OU**: Includes accounts for development and staging environments in both US and EU regions.
