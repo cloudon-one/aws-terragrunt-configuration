@@ -9,7 +9,7 @@ common:
     terraform: "true"
 
 Environments:
-  global:  
+  shared:  
     Resources:
       org_units:
         inputs:
@@ -62,7 +62,7 @@ Environments:
           network:
             account_name: "network"
             account_email: "aws_network@cloudon.one"
-            ou: "ou-XXXX-XXXXXXXX"
+            ou: "ou-XXXX-XXXXXXXX"    
       iam:
         inputs:
           policies:  
@@ -102,7 +102,7 @@ Environments:
               - "user1"
               group: "qa"
           
-  shared:
+  network:
     Resources:
       vpc:
         region: *DefReg
@@ -407,7 +407,7 @@ Environments:
     Resources:
 
   eu-prod:
-  Resources:
+    Resources:
 
   us-prod:
     Resources:

@@ -1,5 +1,5 @@
 terraform {
-  source = "git@github.com:FidoMoney/terraform-modules.git//aws-terraform-cloudtrail"
+  source = "git@git@github.com:cloudon-one/aws-terraform-modules.git/aws-terraform-cloudtrail"
 }
 
 include "common" {

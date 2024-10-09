@@ -3,7 +3,7 @@ include "common" {
 }
 
 terraform {
-  source = "git::ssh://git@github.com/FidoMoney/terraform-modules.git//aws-terraform-vpc?ref=dev"
+  source = "git::ssh://git@github.com/FidoMoney/terraform-modules.git//aws-terraform-vpc"
 }
 
 locals {
@@ -14,7 +14,6 @@ locals {
   resource_vars = local.common_vars["Environments"]["${local.location}-${local.environment}"]["Resources"]["${local.resource}"]
 }
 
-inputs = merge(local.resource_vars["inputs"][0], {
-  # Add any additional inputs or overrides here
-  # example_input = "example_value"
+inputs = merge(local.resource_vars["inputs"], {
+
 })

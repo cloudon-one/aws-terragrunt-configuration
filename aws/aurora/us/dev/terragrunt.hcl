@@ -3,7 +3,7 @@ include "common" {
 }
 
 terraform {
-  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-acm"
+  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-rds-aurora"
 }
 
 locals {
@@ -14,6 +14,6 @@ locals {
   resource_vars = local.common_vars["Environments"]["${local.location}-${local.environment}"]["Resources"]["${local.resource}"]
 }
 
-inputs = {
-  certificates = local.resource_vars["inputs"]
-}
+inputs = merge(local.resource_vars["inputs"], {
+
+})

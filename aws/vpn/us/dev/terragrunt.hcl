@@ -3,7 +3,7 @@ include "common" {
 }
 
 terraform {
-  source = "git::ssh://git@github.com/FidoMoney/terraform-modules.git//aws-terraform-vpn?ref=dev"
+  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.gits//aws-terraform-vpn"
 }
 
 locals {
