@@ -4,7 +4,7 @@ terraform {
   }
   extra_arguments "non-interactive" {
     commands = [
-      "hclfmt",
+      "fmt",
       "validate",
       "plan",
       "apply"
@@ -17,6 +17,8 @@ terraform {
 
 locals {
   common_vars = yamldecode(file(find_in_parent_folders("vars.yaml")))
+  environment   = basename(get_terragrunt_dir())
+  location      = basename(dirname(get_terragrunt_dir()))
 }
 
 remote_state {
