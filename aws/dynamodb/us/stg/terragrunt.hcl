@@ -1,12 +1,19 @@
-include "root" {
-  path = find_in_parent_folders()
+include "common" {
+  path = find_in_parent_folders("common.hcl")
+}
+
+terraform {
+  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-dynamodb"
 }
 
 locals {
-  common_vars = read_terragrunt_config(find_in_parent_folders("common.hcl"))
-  
+  common_vars   = yamldecode(file(find_in_parent_folders("vars.yaml")))
+  environment   = basename(get_terragrunt_dir())
+  location      = basename(dirname(get_terragrunt_dir()))
+  resource      = basename(dirname(dirname(get_terragrunt_dir())))
+  resource_vars = local.common_vars["Environments"]["${local.location}-${local.environment}"]["Resources"]["${local.resource}"]
 }
 
-inputs = merge(
-  local.common_vars.locals.common,
-)
+inputs = {
+  dynamodb_tables = local.resource_vars["inputs"]
+}

@@ -3,7 +3,7 @@ include "common" {
 }
 
 terraform {
-  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-rds?ref=dev"
+  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-rds"
 }
 
 locals {
