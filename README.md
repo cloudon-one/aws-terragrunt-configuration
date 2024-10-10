@@ -33,7 +33,7 @@ Before you can use this Terragrunt repository, ensure you have the following too
    - Verify installation: Run `terraform version`
 
 3. **Terragrunt**
-   - Version: 0.60.0 or later (check `terragrunt.hcl` for specific version requirements)
+   - Version: 0.60.0 or later 
    - Installation: Follow the [official Terragrunt installation guide](https://terragrunt.gruntwork.io/docs/getting-started/install/)
    - Verify installation: Run `terragrunt --version`
 
@@ -60,14 +60,10 @@ After installing these tools, ensure they are available in your system's PATH.
 
 1. Clone this repository:
    ```
-   git clone [repository-url]
-   cd [repository-name]
+   git clone https://github.com/cloudon-one/aws-terragrunt-configuration.git
+   cd aws-terragrunt-configuration
    ```
 2. Navigate to the desired service/region/environment directory before running Terragrunt commands.
-
-# Terragrunt Infrastructure Repository
-
-This repository contains Terragrunt configurations for managing our multi-environment, multi-region AWS infrastructure.
 
 ## Repository Structure
 
@@ -143,12 +139,6 @@ To apply changes to all services in a region or environment, navigate to the des
 terragrunt run-all plan
 terragrunt run-all apply
 ```
-
-## Prerequisites
-
-- Terragrunt
-- AWS CLI configured with appropriate credentials
-- Terraform (version specified in `common.hcl`)
 
 ## Best Practices
 
