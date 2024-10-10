@@ -2,9 +2,9 @@
 
 ## Architecture Overview
 
-Below is a diagram illustrating our AWS infrastructure architecture:
+Below is a diagram illustrating reference AWS infra architecture:
 
-![AWS Infrastructure Architecture](https://github.com/cloudon-one/aws-terragrunt-configuration/blob/main/aws/aws-landing-zone.png)
+![AWS Infra Architecture](https://github.com/cloudon-one/aws-terragrunt-configuration/blob/main/aws/aws-landing-zone.png)
 
 This diagram provides an overview of our AWS account structure and the services deployed across different organizational units (OUs):
 
