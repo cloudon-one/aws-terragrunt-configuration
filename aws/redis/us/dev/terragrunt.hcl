@@ -2,8 +2,12 @@ include "common" {
   path = find_in_parent_folders("common.hcl")
 }
 
+dependency "vpc" {
+  config_path = "../../../vpc/us/dev"
+}
+
 terraform {
-  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-redis"
+  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-redis?ref=dev"
 }
 
 locals {
@@ -17,5 +21,9 @@ locals {
 inputs = merge(
   local.resource_vars["inputs"],
   {
+    cluster_id         = "${local.location}-${local.environment}-${local.resource}"
+    subnet_ids         = dependency.vpc.outputs.elasticache_subnets
+    security_group_ids = dependency.vpc.outputs.redis_sg_id
+    subnet_group_name  = "${local.location}-${local.environment}-${local.resource}-subnet-group"
   }
 )

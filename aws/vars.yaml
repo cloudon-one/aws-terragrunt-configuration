@@ -361,17 +361,8 @@ Environments:
       redis:
         region: *DefReg
         inputs:
-          cluster_id: "us-dev-redis"
-          description: "us-dev Redis Redis Cluster"
           engine_version: "6.x"
           node_type: "cache.t4g.medium"
-          security_group_ids: 
-          - "sg-03325c76dfd039eda"
-          subnet_group_name: "us-dev-redis-subnet-group"
-          subnet_ids: 
-          - "subnet-09ce3b45165e3388c"
-          - "subnet-0b882b0027753af49"
-          - "subnet-05e6cc1c635fe1025"
       tgw:
         region: &DefReg
         inputs:
