@@ -375,11 +375,6 @@ Environments:
       tgw:
         region: &DefReg
         inputs:
-          name: "us-dev-tgw"
-          description: "Transit GW - us-dev"
-          vpc_attachments:
-          vpc_id: ""
-          subnet_ids:
           tgw_routes: 
               - destination_cidr_block: "10.236.8.229/32"
 
