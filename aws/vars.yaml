@@ -1,7 +1,7 @@
 common:
   org_id: &org_id "r-XXXXX"
-  terraform_role_arn: "arn:aws:iam::XXXXXXXXXX:role/terraform"
-  default_region: &DefReg "us-west-1"
+  terraform_role_arn: "arn:aws:iam::851725384896:role/terraform"
+  default_region: &DefReg "us-east-2"
   statebucketsuffix: tf-state-001
   owner: "cloudon"
   common_tags:
@@ -107,24 +107,24 @@ Environments:
       vpc:
         region: *DefReg
         inputs:
-        - vpc_name: "outbound-vpc"
-          vpc_cidr: "192.168.200.0/24"
-          private_subnets: ["192.168.200.192/26", "192.168.200.128/26"]
-          public_subnets: ["192.168.200.64/26", "192.168.200.0/26"]
-          azs: ["us-west-1a", "us-west-1b"]
-          enable_nat_gateway: true
-          tags:
-            Owner: "Terraform"
-            Name: "outbound-vpc"
-        - vpc_name: "core-vpc"
-          vpc_cidr: "192.168.201.0/24"
-          private_subnets: ["192.168.201.192/26", "192.168.201.128/26"]
-          public_subnets: ["192.168.201.64/26", "192.168.201.0/26"]
-          azs: ["us-west-1a", "us-west-1b"]
-          enable_nat_gateway: false
-          tags:
-            Owner: "Terraform"
-            Name: "core-vpc"
+          - vpc_name: "outbound-vpc"
+            vpc_cidr: "192.168.200.0/24"
+            private_subnets: ["192.168.200.192/26", "192.168.200.128/26"]
+            public_subnets: ["192.168.200.64/26", "192.168.200.0/26"]
+            azs: ["us-east-2a", "us-east-2b"]
+            enable_nat_gateway: true
+            tags:
+              Owner: "Terraform"
+              Name: "outbound-vpc"
+          - vpc_name: "core-vpc"
+            vpc_cidr: "192.168.201.0/24"
+            private_subnets: ["192.168.201.192/26", "192.168.201.128/26"]
+            public_subnets: ["192.168.201.64/26", "192.168.201.0/26"]
+            azs: ["us-east-2a", "us-east-2b"]
+            enable_nat_gateway: false
+            tags:
+              Owner: "Terraform"
+              Name: "core-vpc"
       core-tgw:
         region: *DefReg
         inputs:  
@@ -146,40 +146,29 @@ Environments:
       vpc:
         region: *DefReg
         inputs:
-        - vpc_name: "us-dev-vpc"
+          vpc_name: "us-dev-vpc"
           vpc_cidr: "10.30.0.0/16"
-          azs: ["us-west-1a", "us-west-1b", "us-west-1c"]
+          azs: ["us-east-2a", "us-east-2b", "us-east-2c"]
           private_subnets: ["10.30.2.0/24", "10.30.3.0/24", "10.30.1.0/24"]
           public_subnets: ["10.30.101.0/24", "10.30.102.0/24","10.30.103.0/24"]
           intra_subnets: ["10.30.8.16/28", "10.30.8.32/28","10.30.8.0/28"]
           elasticache_subnets: ["10.30.10.0/24", "10.30.12.0/24","10.30.11.0/24"]
           database_subnets: ["10.30.5.0/24", "10.30.7.0/24","10.30.6.0/24"]
-          database_subnet_names: ["us-dev-vpc-db-us-west-1a", "us-dev-vpc-db-us-west-1c", "us-dev-vpc-db-us-west-1b"]
+          database_subnet_names: ["us-dev-vpc-db-us-east-2a", "us-dev-vpc-db-us-east-2c", "us-dev-vpc-db-us-east-2b"]
           private_subnet_names: ["us-dev-private", "us-dev-private", "us-dev-private"]
           public_subnet_names: ["us-dev-public", "us-dev-public"]
-          intra_subnet_names: ["us-dev-vpc-intra-us-west-1b", "us-dev-vpc-elasticache-us-west-1a","us-dev-vpc-elasticache-us-west-1c"]
-          elasticache_subnet_names : ["us-dev-vpc-elasticache-us-west-1a", "us-dev-vpc-elasticache-us-west-1b","us-dev-vpc-elasticache-us-west-1c"]
+          intra_subnet_names: ["us-dev-vpc-intra-us-east-2b", "us-dev-vpc-elasticache-us-east-2a","us-dev-vpc-elasticache-us-east-2c"]
+          elasticache_subnet_names : ["us-dev-vpc-elasticache-us-east-2a", "us-dev-vpc-elasticache-us-east-2b","us-dev-vpc-elasticache-us-east-2c"]
           enable_nat_gateway: true
           tags:
             terraform: "true"
             vpc: "us-dev-vpc"
-        - routing_tables: 
-          - name: "us-dev-vpc"
-            routes:
-                - destination_prefix_list_id : "pl-XXXXXXXX"
-                  vpc_endpoint_id: "vpce-XXXXXXXXXXXXXXXXXX"
-                - destination_prefix_list_id : "pl-XXXXXXXX"
-                  vpc_endpoint_id: "vpce-XXXXXXXXXXXXXXXXXX"  
-                - cidr_block: "10.30.0.0/16"  
-                  gateway_id: "local"
-                - cidr_block: "10.236.8.229/32"
-                  transit_gateway_id: "tgw-XXXXXXXXXXXXXXXXXX" 
       rds:
         region: *DefReg
         inputs:
           rds_instances:
           - identifier: "us-dev-postgresql-rds" 
-            availability_zone: "us-west-1c"      
+            availability_zone: "us-east-2c"      
             engine: "postgresql"
             engine_version: "14.10"
             instance_class: "db.t4g.small"
@@ -197,7 +186,7 @@ Environments:
         inputs:
           aurora_clusters:        
           - identifier: "us-dev-risk-rds"
-            availability_zone: "us-west-1"
+            availability_zone: "us-east-2"
             engine: "aurora-postgresql"
             engine_version: "14.9"
             instance_class: "db.r6g.xlarge"
@@ -264,7 +253,7 @@ Environments:
         inputs:
         - name: "Open VPN Server"
           ami: "ami-029cfca952b331b52"
-          availability_zone: "us-west-1a"
+          availability_zone: "us-east-2a"
           private_ip: "10.30.101.133"
           associate_public_ip_address: "111.222.333.444"
           subnet_id: "subnet-XXXXXXXXXXXXX"
@@ -277,7 +266,7 @@ Environments:
             Terraform: "true"
         - name: "us-dev-deeplink"
           ami: "ami-05e786af422f8082a"
-          availability_zone: "us-west-1a"
+          availability_zone: "us-east-2a"
           associate_public_ip_address: "111.222.333.444"
           subnet_id: "subnet-XXXXXXXXXXXXX"
           instance_type: "t3.small"
@@ -348,7 +337,7 @@ Environments:
       api-gw:
         region: *DefReg
         sqs_role_arn: &sqs_role "arn:aws:iam::XXXXXXXXXXXX:role/api-sqs-applications"
-        acm_certificate_arn: &acm_cert "arn:aws:acm:us-west-1:1XXXXXXXXXXXX:certificate/XXXXXXXXXXXX"
+        acm_certificate_arn: &acm_cert "arn:aws:acm:us-east-2:1XXXXXXXXXXXX:certificate/XXXXXXXXXXXX"
         inputs:
         - name: "us-dev-data-gw"
           description: ""
@@ -368,10 +357,7 @@ Environments:
               http_method: ""
               authorization: ""
               sqs_name: ""
-              request_template: ""
-
- 
-      
+              request_template: ""  
       redis:
         region: *DefReg
         inputs:

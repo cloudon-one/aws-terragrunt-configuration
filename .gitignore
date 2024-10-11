@@ -1,20 +1,25 @@
-# Local .terraform directories
-**/.terraform/*
+# Terragrunt-specific
+.terragrunt-cache
+.terraform.lock.hcl
 
-# .tfstate files
+# Terraform
+.terraform
 *.tfstate
 *.tfstate.*
-
-# Crash log files
 crash.log
 crash.*.log
-
-# Exclude all .tfvars files, which are likely to contain sensitive data, such as
-# password, private keys, and other secrets. These should not be part of version 
-# control as they are data points which are potentially sensitive and subject 
-# to change depending on the environment.
 *.tfvars
-*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore any .tfplan files
+*.tfplan
 
 # Ignore override files as they are usually used to override resources locally and so
 # are not checked in
@@ -23,12 +28,47 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Include override files you do wish to add to version control using negated pattern
-# !example_override.tf
+# Ignore environment-specific variables files
+*.auto.tfvars
 
-# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
-# example: *tfplan*
+# Ignore log files
+*.log
 
-# Ignore CLI configuration files
-.terraformrc
-terraform.rc
+# Ignore sensitive files
+*.pem
+*.key
+*.pub
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore any local .env files
+.env
+
+# Ignore any generated plan files
+plan.out
+plan.out.json
+
+# Ignore any backup files
+*.bak
+
+# Ignore any temporary files
+*.tmp
+aws/vpc/us/dev/.terragrunt-cache/lOgC0SrOTaGq9nsmP-dL7UntjBY/FXTjdyUwcyTaKhxY0bL69OG9v0A
+aws/vpc/us/dev/.terragrunt-cache/lOgC0SrOTaGq9nsmP-dL7UntjBY/FXTjdyUwcyTaKhxY0bL69OG9v0A
+aws/vpc/us/dev/.terraform.lock.hcl
+aws/vpc/us/dev/.terragrunt-cache/lOgC0SrOTaGq9nsmP-dL7UntjBY/FXTjdyUwcyTaKhxY0bL69OG9v0A
+aws/vpc/us/dev/.terraform.lock.hcl
