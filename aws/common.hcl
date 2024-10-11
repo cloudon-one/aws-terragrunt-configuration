@@ -6,8 +6,8 @@ terraform {
     commands = [
       "fmt",
       "validate",
-      "plan",
-      "apply"
+      "plan"
+
     ]
     arguments = [
       "-compact-warnings", 

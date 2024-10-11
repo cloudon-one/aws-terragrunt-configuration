@@ -1,5 +1,5 @@
 # Terragrunt-specific
-**.terragrunt-cache/*
+.terragrunt-cache
 .terraform.lock.hcl
 
 # Terraform
@@ -68,3 +68,7 @@ plan.out.json
 # Ignore any temporary files
 *.tmp
 aws/vpc/us/dev/.terragrunt-cache/lOgC0SrOTaGq9nsmP-dL7UntjBY/FXTjdyUwcyTaKhxY0bL69OG9v0A
+aws/vpc/us/dev/.terragrunt-cache/lOgC0SrOTaGq9nsmP-dL7UntjBY/FXTjdyUwcyTaKhxY0bL69OG9v0A
+aws/vpc/us/dev/.terraform.lock.hcl
+aws/vpc/us/dev/.terragrunt-cache/lOgC0SrOTaGq9nsmP-dL7UntjBY/FXTjdyUwcyTaKhxY0bL69OG9v0A
+aws/vpc/us/dev/.terraform.lock.hcl
