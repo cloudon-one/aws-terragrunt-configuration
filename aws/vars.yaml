@@ -280,44 +280,41 @@ Environments:
       eks:
         region: *DefReg
         inputs:
-        - cluster_name: "us-dev-eks"
-          version: "1.31"
-          vpc_id: "vpc-XXXXXXXXXXXXXX"
-          subnet_ids: ["subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX"]
-          iam_role_arn: "arn:aws:iam::XXXXXXXXXXXXXX:role/us-dev-eks-cluster"
-          node_security_group_name: "sg-XXXXXXXXXXXXXX"
-          cluster_additional_security_group_ids: ["sg-XXXXXXXXXXXXXX"]
-          cluster_endpoint_public_access: true
-          eks_managed_node_groups: 
-            - name: "separate-eks-mng-spot"
-              instance_types: ["m6i.large", "m6id.large", "m6in.large", "m6idn.large", "m6a.large"]
-              min_size: 0
-              max_size: 10
-              desired_size: 2
-              ami_type: "AL2_x86_64"
-              capacity_type: "SPOT"
-              access_entries:
-              - principal: "arn:aws:iam::XXXXXXXXXXXXXX:role/admins"
-                type: "STANDARD"
-                access_policies: 
-                - "AmazonEKSAdminPolicy"
-                - "AmazonEKSClusterAdminPolicy"
-                kubernetes_groups: ["system:masters"]
-                access: "allow"    
-          tags:
-            Environment: "us-dev"
-            Owner: "Terraform"
-            karpenter.sh/discovery: "us-dev-eks"
-            Name: "us-dev-eks"
+        version: "1.31"
+        iam_role_arn: "arn:aws:iam::XXXXXXXXXXXXXX:role/us-dev-eks-cluster"
+        node_security_group_name: "sg-XXXXXXXXXXXXXX"
+        cluster_additional_security_group_ids: ["sg-XXXXXXXXXXXXXX"]
+        cluster_endpoint_public_access: true
+        eks_managed_node_groups: 
+          - name: "separate-eks-mng-spot"
+            instance_types: ["m6i.large", "m6id.large", "m6in.large", "m6idn.large", "m6a.large"]
+            min_size: 0
+            max_size: 10
+            desired_size: 2
+            ami_type: "AL2_x86_64"
+            capacity_type: "SPOT"
+            access_entries:
+            - principal: "arn:aws:iam::XXXXXXXXXXXXXX:role/admins"
+              type: STANDARD
+              access_policies:
+                - AmazonEKSAdminPolicy
+                - AmazonEKSClusterAdminPolicy
+              kubernetes_groups:
+                - system:masters
+            tags:
+              Environment: "us-dev"
+              Owner: "Terraform"
+              karpenter.sh/discovery: "us-dev-eks"
+              Name: "us-dev-eks"
       acm:
         region: *DefReg
         inputs:
-        - domain_name: "*.cloudon.one"
-          tags:
-            Environment: "us-dev"
-            Department: "Infra"
-            ManagedBy: "Terraform"
-            Name: "cloudon.one"
+        domain_name: "*.cloudon.one"
+        tags:
+          Environment: "us-dev"
+          Department: "Infra"
+          ManagedBy: "Terraform"
+          Name: "cloudon.one"
       vpn:  
         region: *DefReg
         inputs:

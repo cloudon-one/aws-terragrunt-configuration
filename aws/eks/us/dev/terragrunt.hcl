@@ -2,6 +2,10 @@ include "common" {
   path = find_in_parent_folders("common.hcl")
 }
 
+dependency "vpc" {
+  config_path = "../../../vpc/us/dev"
+}
+
 terraform {
   source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-eks"
 }
@@ -15,5 +19,7 @@ locals {
 }
 
 inputs = {
-  clusters = local.resource_vars["inputs"]
+  cluster_name = "${local.location}-${local.environment}-${local.resource}"
+  vpc_id = dependency.vpc.outputs.vpc_id
+  subnet_ids         = dependency.vpc.outputs.private_subnets
 }
