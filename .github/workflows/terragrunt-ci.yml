@@ -10,13 +10,13 @@ jobs:
   terragrunt:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
+      uses: hashicorp/setup-terraform@v2
 
     - name: Setup Terragrunt
-      uses: autero1/action-terragrunt@v1.1.0
+      uses: autero1/action-terragrunt@v1.3.2
       with:
         terragrunt_version: latest
 
@@ -31,7 +31,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload Plan
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: tfplan
         path: tfplan
