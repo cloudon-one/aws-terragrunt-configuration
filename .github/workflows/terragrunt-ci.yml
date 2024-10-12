@@ -1,0 +1,48 @@
+name: Terragrunt CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  terragrunt:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+
+    - name: Setup Terragrunt
+      uses: autero1/action-terragrunt@v1.1.0
+      with:
+        terragrunt_version: latest
+
+    - name: Terragrunt Init
+      run: terragrunt run-all init
+
+    - name: Terragrunt Format
+      run: terragrunt run-all fmt -check
+
+    - name: Terragrunt Plan
+      run: terragrunt run-all plan -out=tfplan
+      continue-on-error: true
+
+    - name: Upload Plan
+      uses: actions/upload-artifact@v2
+      with:
+        name: tfplan
+        path: tfplan
+
+    - name: Terragrunt Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        echo "Do you want to apply the changes? (yes/no)"
+        read -r apply_changes
+        if [ "$apply_changes" == "yes" ]; then
+          terragrunt run-all apply tfplan
+        else
+          echo "Changes were not applied."
+        fi
