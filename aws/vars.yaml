@@ -207,7 +207,7 @@ Environments:
               Owner: "Data"
       dynamodb:
         inputs:
-          - name: "us-dev.freshsales-contacts"
+          - name: "us-dev-freshsales-contacts"
             billing_mode: "PROVISIONED" 
             read_capacity: "1"
             write_capacity: "1"
@@ -218,7 +218,7 @@ Environments:
             autoscaling_write:
               min_capacity: "1"
               max_capacity: "10"
-          - name: "us-dev.features"
+          - name: "us-dev-features"
             billing_mode: "PAY_PER_REQUEST"   
       sns:
         region: *DefReg
@@ -280,44 +280,41 @@ Environments:
       eks:
         region: *DefReg
         inputs:
-        - cluster_name: "us-dev-eks"
-          version: "1.31"
-          vpc_id: "vpc-XXXXXXXXXXXXXX"
-          subnet_ids: ["subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX"]
-          iam_role_arn: "arn:aws:iam::XXXXXXXXXXXXXX:role/us-dev-eks-cluster"
-          node_security_group_name: "sg-XXXXXXXXXXXXXX"
-          cluster_additional_security_group_ids: ["sg-XXXXXXXXXXXXXX"]
-          cluster_endpoint_public_access: true
-          eks_managed_node_groups: 
-            - name: "separate-eks-mng-spot"
-              instance_types: ["m6i.large", "m6id.large", "m6in.large", "m6idn.large", "m6a.large"]
-              min_size: 0
-              max_size: 10
-              desired_size: 2
-              ami_type: "AL2_x86_64"
-              capacity_type: "SPOT"
-              access_entries:
-              - principal: "arn:aws:iam::XXXXXXXXXXXXXX:role/admins"
-                type: "STANDARD"
-                access_policies: 
-                - "AmazonEKSAdminPolicy"
-                - "AmazonEKSClusterAdminPolicy"
-                kubernetes_groups: ["system:masters"]
-                access: "allow"    
-          tags:
-            Environment: "us-dev"
-            Owner: "Terraform"
-            karpenter.sh/discovery: "us-dev-eks"
-            Name: "us-dev-eks"
+        version: "1.31"
+        iam_role_arn: "arn:aws:iam::XXXXXXXXXXXXXX:role/us-dev-eks-cluster"
+        node_security_group_name: "sg-XXXXXXXXXXXXXX"
+        cluster_additional_security_group_ids: ["sg-XXXXXXXXXXXXXX"]
+        cluster_endpoint_public_access: true
+        eks_managed_node_groups: 
+          - name: "separate-eks-mng-spot"
+            instance_types: ["m6i.large", "m6id.large", "m6in.large", "m6idn.large", "m6a.large"]
+            min_size: 0
+            max_size: 10
+            desired_size: 2
+            ami_type: "AL2_x86_64"
+            capacity_type: "SPOT"
+            access_entries:
+            - principal: "arn:aws:iam::XXXXXXXXXXXXXX:role/admins"
+              type: STANDARD
+              access_policies:
+                - AmazonEKSAdminPolicy
+                - AmazonEKSClusterAdminPolicy
+              kubernetes_groups:
+                - system:masters
+            tags:
+              Environment: "us-dev"
+              Owner: "Terraform"
+              karpenter.sh/discovery: "us-dev-eks"
+              Name: "us-dev-eks"
       acm:
         region: *DefReg
         inputs:
-        - domain_name: "*.cloudon.one"
-          tags:
-            Environment: "us-dev"
-            Department: "Infra"
-            ManagedBy: "Terraform"
-            Name: "cloudon.one"
+        domain_name: "*.cloudon.one"
+        tags:
+          Environment: "us-dev"
+          Department: "Infra"
+          ManagedBy: "Terraform"
+          Name: "cloudon.one"
       vpn:  
         region: *DefReg
         inputs:
@@ -361,32 +358,12 @@ Environments:
       redis:
         region: *DefReg
         inputs:
-          cluster_id: "us-dev-redis"
-          description: "us-dev Redis Redis Cluster"
           engine_version: "6.x"
           node_type: "cache.t4g.medium"
-          security_group_ids: 
-          - "sg-03325c76dfd039eda"
-          subnet_group_name: "us-dev-redis-subnet-group"
-          subnet_ids: 
-          - "subnet-09ce3b45165e3388c"
-          - "subnet-0b882b0027753af49"
-          - "subnet-05e6cc1c635fe1025"
       tgw:
         region: &DefReg
         inputs:
-          name: "us-dev-tgw"
-          description: "Transit GW - us-dev"
-          vpc_attachments:
-          - vpc_id: "vpc-0aba5079330c41bbc"
-            subnet_ids:
-            - "subnet-045d7ea733fc58680"
-            - "subnet-090f57641009e732f"
-            - "subnet-09ce3b45165e3388c"
-            - "subnet-05e6cc1c635fe1025"
-            - "subnet-00230194d09ecc572"
-            - "subnet-0b882b0027753af49"
-            tgw_routes: 
+          tgw_routes: 
               - destination_cidr_block: "10.236.8.229/32"
 
   us-stg: 
