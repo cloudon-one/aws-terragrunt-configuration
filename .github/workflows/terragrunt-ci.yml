@@ -10,13 +10,13 @@ jobs:
   terragrunt:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
+      uses: hashicorp/setup-terraform@v3
 
     - name: Setup Terragrunt
-      uses: autero1/action-terragrunt@v1.3.2
+      uses: autero1/action-terragrunt@v2.0.0
       with:
         terragrunt_version: latest
 
