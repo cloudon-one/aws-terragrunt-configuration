@@ -1,6 +1,6 @@
 common:
   org_id: &org_id "r-XXXXX"
-  terraform_role_arn: "arn:aws:iam::851725384896:role/terraform"
+  terraform_role_arn: "arn:aws:iam::XXXXXXXXXXX:role/terraform"
   default_region: &DefReg "us-east-2"
   statebucketsuffix: tf-state-001
   owner: "cloudon"
@@ -71,7 +71,7 @@ Environments:
             inputs:
             - name: "user1"
               policy_arns:
-              - "arn:aws:iam::XXXXXXXX:policy/user_policy"
+              - "arn:aws:iam::XXXXXXXXXXXX:policy/user_policy"
           groups:
             inputs:
             - name: "admins"
