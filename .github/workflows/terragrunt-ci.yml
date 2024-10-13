@@ -18,17 +18,35 @@ jobs:
     - name: Detect changed directories
       id: set-matrix
       run: |
+        echo "Starting change detection process..."
+        
+        echo "Making detect_changes.sh executable..."
         chmod +x ./detect_changes.sh
+        
+        echo "Executing detect_changes.sh..."
         DIRS=$(./detect_changes.sh)
+        
+        echo "Raw output from detect_changes.sh:"
+        echo "$DIRS"
+        
+        echo "Setting matrix output..."
         echo "matrix=$DIRS" >> $GITHUB_OUTPUT
+        
+        echo "Determining if changes were detected..."
         if [ "$DIRS" == "[]" ]; then
+          echo "No changes detected."
           echo "changes_detected=false" >> $GITHUB_OUTPUT
         else
+          echo "Changes detected in the following directories:"
+          echo "$DIRS" | jq -r '.[]'
           echo "changes_detected=true" >> $GITHUB_OUTPUT
         fi
+        
+        echo "Change detection process completed."
     - name: Debug output
       run: |
-        echo "Detected changes: ${{ steps.set-matrix.outputs.matrix }}"
+        echo "Matrix output: ${{ steps.set-matrix.outputs.matrix }}"
+        echo "Changes detected: ${{ steps.set-matrix.outputs.changes_detected }}"
 
   terragrunt:
     needs: detect_changes
