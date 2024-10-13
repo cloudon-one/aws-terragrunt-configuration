@@ -13,8 +13,8 @@ declare -A CHANGED_DIRS
 # Loop through changed files and extract unique directories
 for file in $CHANGED_FILES; do
     dir=$(dirname "$file")
-    # Check if the directory contains a terragrunt.hcl file
-    if [[ -f "$dir/terragrunt.hcl" ]]; then
+    # Check if the directory contains a terragrunt.hcl or vars.yaml file
+    if [[ -f "$dir/terragrunt.hcl" ]] || [[ -f "$dir/vars.yaml" ]]; then
         CHANGED_DIRS[$dir]=1
     fi
 done
