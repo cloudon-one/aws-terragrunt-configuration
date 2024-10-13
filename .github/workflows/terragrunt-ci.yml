@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      changes_detected: ${{ steps.set-matrix.outputs.changes_detected }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -20,9 +21,18 @@ jobs:
         chmod +x ./detect_changes.sh
         DIRS=$(./detect_changes.sh)
         echo "matrix=$DIRS" >> $GITHUB_OUTPUT
+        if [ "$DIRS" == "[]" ]; then
+          echo "changes_detected=false" >> $GITHUB_OUTPUT
+        else
+          echo "changes_detected=true" >> $GITHUB_OUTPUT
+        fi
+    - name: Debug output
+      run: |
+        echo "Detected changes: ${{ steps.set-matrix.outputs.matrix }}"
 
   terragrunt:
     needs: detect_changes
+    if: needs.detect_changes.outputs.changes_detected == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -75,3 +85,11 @@ jobs:
           echo "Changes were not applied."
         fi
       working-directory: ${{ matrix.dir }}
+
+  no_changes:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changes_detected == 'false'
+    runs-on: ubuntu-latest
+    steps:
+    - name: No changes detected
+      run: echo "No changes detected in Terragrunt configurations. Skipping Terragrunt job."
