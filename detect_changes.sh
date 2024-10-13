@@ -12,10 +12,16 @@ declare -A CHANGED_DIRS
 
 # Loop through changed files and extract unique directories
 for file in $CHANGED_FILES; do
-    dir=$(dirname "$file")
-    # Check if the directory contains a terragrunt.hcl or vars.yaml file
-    if [[ -f "$dir/terragrunt.hcl" ]] || [[ -f "$dir/vars.yaml" ]]; then
+    if [[ $file == *"terragrunt.hcl" ]]; then
+        dir=$(dirname "$file")
         CHANGED_DIRS[$dir]=1
+    elif [[ $file == "aws/vars.yaml" ]]; then
+        # If aws/vars.yaml changed, we need to process all directories with terragrunt.hcl
+        while IFS= read -r -d '' tg_file
+        do
+            dir=$(dirname "$tg_file")
+            CHANGED_DIRS[$dir]=1
+        done < <(find . -name "terragrunt.hcl" -print0)
     fi
 done
 
