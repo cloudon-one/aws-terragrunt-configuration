@@ -2,7 +2,7 @@ common:
   org_id: &org_id "r-XXXXX"
   terraform_role_arn: "arn:aws:iam::XXXXXXXXXXX:role/terraform"
   default_region: &DefReg "us-east-2"
-  statebucketsuffix: tf-state-001
+  statebucketsuffix: tf-state-01
   owner: "cloudon"
   common_tags:
     owner: "cloudon"
@@ -280,12 +280,15 @@ Environments:
       eks:
         region: *DefReg
         inputs:
-        version: "1.31"
-        iam_role_arn: "arn:aws:iam::XXXXXXXXXXXXXX:role/us-dev-eks-cluster"
-        node_security_group_name: "sg-XXXXXXXXXXXXXX"
-        cluster_additional_security_group_ids: ["sg-XXXXXXXXXXXXXX"]
-        cluster_endpoint_public_access: true
-        eks_managed_node_groups: 
+          #cluster_name: "us-dev-eks"
+          eks_version: "1.31"
+          #vpc_id: "vpc-XXXXXXXXXXXXX"
+          #subnet_ids: ["subnet-XXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXX"]
+          iam_role_arn: "arn:aws:iam::851725384896:role/us-dev-eks-cluster"
+          node_security_group_name: "sg-XXXXXXXXXXXXXX"
+          cluster_additional_security_group_ids: ["sg-XXXXXXXXXXXXXX"]
+          cluster_endpoint_public_access: true
+          eks_managed_node_groups: 
           - name: "separate-eks-mng-spot"
             instance_types: ["m6i.large", "m6id.large", "m6in.large", "m6idn.large", "m6a.large"]
             min_size: 0
