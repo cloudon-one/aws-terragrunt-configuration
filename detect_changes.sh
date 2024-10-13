@@ -4,26 +4,28 @@
 BASE_SHA=$(git rev-parse origin/main)
 HEAD_SHA=$(git rev-parse HEAD)
 
-# Get the list of changed files
-CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA)
-
 # Initialize an empty array to store unique directories
 declare -A CHANGED_DIRS
 
-# Loop through changed files and extract unique directories
-for file in $CHANGED_FILES; do
-    if [[ $file == *"terragrunt.hcl" ]]; then
-        dir=$(dirname "$file")
-        CHANGED_DIRS[$dir]=1
-    elif [[ $file == "aws/vars.yaml" ]]; then
-        # If aws/vars.yaml changed, we need to process all directories with terragrunt.hcl
+# Check for changes in terragrunt.hcl files
+CHANGED_TG_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA | grep 'terragrunt.hcl$')
+for file in $CHANGED_TG_FILES; do
+    dir=$(dirname "$file")
+    CHANGED_DIRS[$dir]=1
+done
+
+# Check for changes in aws/vars.yaml
+if git diff --name-only $BASE_SHA $HEAD_SHA | grep -q 'aws/vars.yaml$'; then
+    # Check if the content of aws/vars.yaml has changed
+    if ! git diff --exit-code $BASE_SHA $HEAD_SHA -- aws/vars.yaml > /dev/null; then
+        # Content has changed, so we need to process all directories with terragrunt.hcl
         while IFS= read -r -d '' tg_file
         do
             dir=$(dirname "$tg_file")
             CHANGED_DIRS[$dir]=1
         done < <(find . -name "terragrunt.hcl" -print0)
     fi
-done
+fi
 
 # Output the changed directories as a JSON array
 echo -n '['

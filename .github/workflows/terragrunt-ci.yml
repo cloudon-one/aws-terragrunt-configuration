@@ -92,4 +92,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: No changes detected
-      run: echo "No changes detected in Terragrunt configurations or aws/vars.yaml. Skipping Terragrunt job."
+      run: echo "No changes detected in Terragrunt configurations or aws/vars.yaml content. Skipping Terragrunt job."
