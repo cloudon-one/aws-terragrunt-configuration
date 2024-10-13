@@ -24,14 +24,16 @@ jobs:
         chmod +x ./detect_changes.sh
         
         echo "Executing detect_changes.sh..."
-        DIRS=$(./detect_changes.sh 2>&1)
+        OUTPUT=$(./detect_changes.sh 2>&1)
         RESULT=$?
         
-        echo "Debug output from detect_changes.sh:"
-        echo "$DIRS" | grep -v '^['
+        echo "Full output from detect_changes.sh:"
+        echo "$OUTPUT"
         
-        echo "JSON output from detect_changes.sh:"
-        JSON_OUTPUT=$(echo "$DIRS" | grep '^[')
+        echo "Extracting JSON output..."
+        JSON_OUTPUT=$(echo "$OUTPUT" | tail -n 1)
+        
+        echo "JSON output:"
         echo "$JSON_OUTPUT"
         
         echo "Setting matrix output..."
@@ -54,4 +56,66 @@ jobs:
         echo "Matrix output: ${{ steps.set-matrix.outputs.matrix }}"
         echo "Changes detected: ${{ steps.set-matrix.outputs.changes_detected }}"
 
-  # ... rest of the workflow remains the same
+  terragrunt:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changes_detected == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.detect_changes.outputs.matrix) }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+    
+    - name: Setup Terragrunt
+      uses: autero1/action-terragrunt@v2.0.0
+      with:
+        terragrunt_version: latest
+    
+    - name: Terragrunt Init
+      run: terragrunt init
+      working-directory: ${{ matrix.dir }}
+    
+    - name: Terragrunt Format
+      run: terragrunt fmt -check
+      working-directory: ${{ matrix.dir }}
+    
+    - name: Terragrunt Plan
+      run: terragrunt plan -out=tfplan
+      continue-on-error: true
+      working-directory: ${{ matrix.dir }}
+    
+    - name: Upload Plan
+      uses: actions/upload-artifact@v3
+      with:
+        name: tfplan-${{ matrix.dir }}
+        path: ${{ matrix.dir }}/tfplan
+    
+    - name: Terragrunt Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        echo "Do you want to apply the changes? (yes/no)"
+        read -r apply_changes
+        if [ "$apply_changes" == "yes" ]; then
+          terragrunt apply tfplan
+        else
+          echo "Changes were not applied."
+        fi
+      working-directory: ${{ matrix.dir }}
+
+  no_changes:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changes_detected == 'false'
+    runs-on: ubuntu-latest
+    steps:
+    - name: No changes detected
+      run: echo "No relevant changes detected in Terragrunt configurations or vars.yaml files. Skipping Terragrunt job."
