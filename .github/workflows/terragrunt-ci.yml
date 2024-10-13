@@ -9,24 +9,24 @@ jobs:
   detect_changes:
     runs-on: ubuntu-latest
     outputs:
-      changed_dirs: ${{ steps.set-dirs.outputs.dirs }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Detect changed directories
+      id: set-matrix
       run: |
         chmod +x ./detect_changes.sh
         DIRS=$(./detect_changes.sh)
-        echo "dirs=$DIRS" >> $GITHUB_OUTPUT
-      id: set-dirs
+        echo "matrix=$DIRS" >> $GITHUB_OUTPUT
 
   terragrunt:
     needs: detect_changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.detect_changes.outputs.changed_dirs) }}
+        dir: ${{ fromJson(needs.detect_changes.outputs.matrix) }}
     steps:
     - uses: actions/checkout@v4
     
@@ -35,7 +35,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-2 
+        aws-region: us-east-2
     
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3

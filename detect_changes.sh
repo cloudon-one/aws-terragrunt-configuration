@@ -19,7 +19,15 @@ for file in $CHANGED_FILES; do
     fi
 done
 
-# Output the changed directories
+# Output the changed directories as a JSON array
+echo -n '['
+first=true
 for dir in "${!CHANGED_DIRS[@]}"; do
-    echo $dir
+    if [ "$first" = true ] ; then
+        first=false
+    else
+        echo -n ','
+    fi
+    echo -n "\"$dir\""
 done
+echo ']'
