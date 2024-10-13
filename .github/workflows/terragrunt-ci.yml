@@ -1,5 +1,4 @@
 name: Terragrunt CI
-
 on:
   push:
     branches: [ main ]
@@ -7,42 +6,72 @@ on:
     branches: [ main ]
 
 jobs:
-  terragrunt:
+  detect_changes:
     runs-on: ubuntu-latest
+    outputs:
+      changed_dirs: ${{ steps.set-dirs.outputs.dirs }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Detect changed directories
+      run: |
+        chmod +x ./detect_changes.sh
+        DIRS=$(./detect_changes.sh)
+        echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+      id: set-dirs
 
+  terragrunt:
+    needs: detect_changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.detect_changes.outputs.changed_dirs) }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2 
+    
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
-
+    
     - name: Setup Terragrunt
       uses: autero1/action-terragrunt@v2.0.0
       with:
         terragrunt_version: latest
-
+    
     - name: Terragrunt Init
-      run: terragrunt run-all init
-
+      run: terragrunt init
+      working-directory: ${{ matrix.dir }}
+    
     - name: Terragrunt Format
-      run: terragrunt run-all fmt -check
-
+      run: terragrunt fmt -check
+      working-directory: ${{ matrix.dir }}
+    
     - name: Terragrunt Plan
-      run: terragrunt run-all plan -out=tfplan
+      run: terragrunt plan -out=tfplan
       continue-on-error: true
-
+      working-directory: ${{ matrix.dir }}
+    
     - name: Upload Plan
       uses: actions/upload-artifact@v3
       with:
-        name: tfplan
-        path: tfplan
-
+        name: tfplan-${{ matrix.dir }}
+        path: ${{ matrix.dir }}/tfplan
+    
     - name: Terragrunt Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
         echo "Do you want to apply the changes? (yes/no)"
         read -r apply_changes
         if [ "$apply_changes" == "yes" ]; then
-          terragrunt run-all apply tfplan
+          terragrunt apply tfplan
         else
           echo "Changes were not applied."
         fi
+      working-directory: ${{ matrix.dir }}
