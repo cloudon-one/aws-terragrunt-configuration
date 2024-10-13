@@ -2,7 +2,7 @@ common:
   org_id: &org_id "r-XXXXX"
   terraform_role_arn: "arn:aws:iam::851725384896:role/terraform"
   default_region: &DefReg "us-east-2"
-  statebucketsuffix: tf-state-001
+  statebucketsuffix: tf-state-01
   owner: "cloudon"
   common_tags:
     owner: "cloudon"

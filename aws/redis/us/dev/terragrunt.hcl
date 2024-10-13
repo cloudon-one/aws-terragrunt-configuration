@@ -7,7 +7,7 @@ dependency "vpc" {
 }
 
 terraform {
-  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-redis?ref=dev"
+  source = "git::ssh://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-redis?ref=dev"
 }
 
 locals {
@@ -24,6 +24,6 @@ inputs = merge(
     cluster_id         = "${local.location}-${local.environment}-${local.resource}"
     subnet_ids         = dependency.vpc.outputs.elasticache_subnets
     security_group_ids = dependency.vpc.outputs.redis_sg_id
-    subnet_group_name  = "${local.location}-${local.environment}-${local.resource}-subnet-group"
+    subnet_group_name  = dependency.vpc.outputs.elasticache_subnet_group_name
   }
 )
