@@ -256,7 +256,6 @@ Environments:
           availability_zone: "us-east-2a"
           private_ip: "10.30.101.133"
           associate_public_ip_address: "111.222.333.444"
-          subnet_id: "subnet-XXXXXXXXXXXXX"
           instance_type: "t3.small"
           ebs_block_device:
           - "vol-XXXXXXXXXXXXX"
@@ -268,7 +267,6 @@ Environments:
           ami: "ami-05e786af422f8082a"
           availability_zone: "us-east-2a"
           associate_public_ip_address: "111.222.333.444"
-          subnet_id: "subnet-XXXXXXXXXXXXX"
           instance_type: "t3.small"
           private_ip: "10.30.101.234"
           ebs_block_device:
@@ -280,11 +278,8 @@ Environments:
       eks:
         region: *DefReg
         inputs:
-          #cluster_name: "us-dev-eks"
           eks_version: "1.31"
-          #vpc_id: "vpc-XXXXXXXXXXXXX"
-          #subnet_ids: ["subnet-XXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXX"]
-          iam_role_arn: "arn:aws:iam::851725384896:role/us-dev-eks-cluster"
+          iam_role_arn: "arn:aws:iam::XXXXXXXXXXXXXX:role/us-dev-eks-cluster"
           node_security_group_name: "sg-XXXXXXXXXXXXXX"
           cluster_additional_security_group_ids: ["sg-XXXXXXXXXXXXXX"]
           cluster_endpoint_public_access: true
