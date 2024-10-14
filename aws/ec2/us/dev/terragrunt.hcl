@@ -19,6 +19,10 @@ locals {
 }
 
 inputs = {
-  instances = local.resource_vars["inputs"]
-  subnet_id = dependency.vpc.outputs.private_subnets[0]
+  instances = [
+    for instance in local.resource_vars["inputs"] :
+    merge(instance, {
+      subnet_id = dependency.vpc.outputs.private_subnets[0]
+    })
+  ]
 }
