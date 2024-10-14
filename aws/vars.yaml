@@ -25,43 +25,43 @@ Environments:
         inputs:
           us-dev:
             account_name: "cloudon_dev"
-            account_email: "aws_env_dev@cloudon.one"
+            account_email: "aws_env_dev@cloudon.work"
             ou: "ou-XXXX-XXXXXXXX"
           us-stg:
             account_name: "cloudon_stg"
-            account_email: "aws_env_stg@cloudon.one"
+            account_email: "aws_env_stg@cloudon.work"
             ou: "ou-XXXX-XXXXXXXX"
           us-prod:  
             account_name: "cloudon_eu_prod"
-            account_email: "aws_env_eu_prod@cloudon.one"
+            account_email: "aws_env_eu_prod@cloudon.work"
             ou: "ou-XXXX-XXXXXXXX"
           eu-stg:
             account_name: "cloudon_eu_stg"
-            account_email: "aws_env_eu_stg@cloudon.one"  
+            account_email: "aws_env_eu_stg@cloudon.work"  
             ou: "ou-XXXX-XXXXXXXX"
           eu-prod:  
-            account_name: "ucloudon_eu_prod"
-            account_email: "aws_env_eu_prod@cloudon.one"
+            account_name: "cloudon_eu_prod"
+            account_email: "aws_env_eu_prod@cloudon.work"
             ou: "ou-XXXX-XXXXXXXX"
           management:
-            account_name: "master"
-            account_email: "aws_masters@cloudon.one" 
+            account_name: "cloudon_master"
+            account_email: "aws_masters@cloudon.work" 
             ou: "ou-XXXX-XXXXXXXX"
           security:
             account_name: "security"
-            account_email: "aws_security@cloudon.one" 
+            account_email: "aws_security@cloudon.work" 
             ou: "ou-XXXX-XXXXXXXX"
           log-archive:
             account_name: "log-archive"
-            account_email: "aws_log_archive@cloudon.one"   
+            account_email: "aws_log_archive@cloudon.work"   
             ou: "ou-XXXX-XXXXXXXX"
           global:
-            account_name: "cludon_global"
-            account_email: "aws_env_global@cloudon.one"  
+            account_name: "cloudon_global"
+            account_email: "aws_env_global@cloudon.work"  
             ou: "ou-XXXX-XXXXXXXX"
           network:
             account_name: "network"
-            account_email: "aws_network@cloudon.one"
+            account_email: "aws_network@cloudon.work"
             ou: "ou-XXXX-XXXXXXXX"    
       iam:
         inputs:
