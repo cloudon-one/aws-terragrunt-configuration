@@ -2,8 +2,12 @@ include "common" {
   path = find_in_parent_folders("common.hcl")
 }
 
+dependency "vpc" {
+  config_path = "../../../vpc/us/dev"
+}
+
 terraform {
-  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-ec2"
+  source = "git::ssh://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-ec2?ref=dev"
 }
 
 locals {
@@ -15,5 +19,10 @@ locals {
 }
 
 inputs = {
-  instances = local.resource_vars["inputs"]
+  instances = [
+    for instance in local.resource_vars["inputs"] :
+    merge(instance, {
+      subnet_id = dependency.vpc.outputs.private_subnets[0]
+    })
+  ]
 }
