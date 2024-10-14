@@ -257,7 +257,6 @@ Environments:
           private_ip: "10.30.101.133"
           associate_public_ip_address: "111.222.333.444"
           instance_type: "t3.small"
-          subnet_id: dependency.vpc.outputs.private_subnets[0]
           ebs_block_device:
           - "vol-XXXXXXXXXXXXX"
           tags:
@@ -269,7 +268,6 @@ Environments:
           availability_zone: "us-east-2a"
           associate_public_ip_address: "111.222.333.444"
           instance_type: "t3.small"
-          subnet_id: dependency.vpc.outputs.private_subnets[0]
           private_ip: "10.30.101.234"
           ebs_block_device:
           - "vol-XXXXXXXXXXXXX"
