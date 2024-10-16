@@ -9,100 +9,7 @@ common:
     owner: "cloudon"
     terraform: "true"
 
-Environments:
-  shared:  
-    Resources:
-      org_units:
-        inputs:
-        - name: "development"
-          parent_id: *org_id
-        - name: "management"
-          parent_id: *org_id
-        - name: "production"
-          parent_id: *org_id
-        - name: "security"
-          parent_id: *org_id
-      accounts:
-        inputs:
-          us-dev:
-            account_name: "cloudon_dev"
-            account_email: "aws_env_dev@cloudon.work"
-            ou: "ou-XXXX-XXXXXXXX"
-          us-stg:
-            account_name: "cloudon_stg"
-            account_email: "aws_env_stg@cloudon.work"
-            ou: "ou-XXXX-XXXXXXXX"
-          us-prod:  
-            account_name: "cloudon_eu_prod"
-            account_email: "aws_env_eu_prod@cloudon.work"
-            ou: "ou-XXXX-XXXXXXXX"
-          eu-stg:
-            account_name: "cloudon_eu_stg"
-            account_email: "aws_env_eu_stg@cloudon.work"  
-            ou: "ou-XXXX-XXXXXXXX"
-          eu-prod:  
-            account_name: "cloudon_eu_prod"
-            account_email: "aws_env_eu_prod@cloudon.work"
-            ou: "ou-XXXX-XXXXXXXX"
-          management:
-            account_name: "cloudon_master"
-            account_email: "aws_masters@cloudon.work" 
-            ou: "ou-XXXX-XXXXXXXX"
-          security:
-            account_name: "security"
-            account_email: "aws_security@cloudon.work" 
-            ou: "ou-XXXX-XXXXXXXX"
-          log-archive:
-            account_name: "log-archive"
-            account_email: "aws_log_archive@cloudon.work"   
-            ou: "ou-XXXX-XXXXXXXX"
-          global:
-            account_name: "cloudon_global"
-            account_email: "aws_env_global@cloudon.work"  
-            ou: "ou-XXXX-XXXXXXXX"
-          network:
-            account_name: "network"
-            account_email: "aws_network@cloudon.work"
-            ou: "ou-XXXX-XXXXXXXX"    
-      iam:
-        inputs:
-          policies:  
-          roles:    
-          users:
-            inputs:
-            - name: "user1"
-              policy_arns:
-              - "arn:aws:iam::XXXXXXXX:policy/user_policy"
-          groups:
-            inputs:
-            - name: "admins"
-              users:
-              - "admin1"
-              - "admin2"
-              group: "Admins"
-            - name: "devops"
-              users:
-              - "user1"
-              - "user2"
-              - "user3"
-              group: "devops"
-            - name: "data-engineers"
-              users:
-              - "user1"
-              - "user2"
-              - "user3"
-              group: "data-engineers"
-            - name: "developers"
-              users:
-              - "user1"
-              - "user2"
-              - "user3"
-              group: "developers"
-            - name: "qa"
-              users:
-              - "user1"
-              group: "qa"
-                    
+Environments:                  
   us-dev:
     Resources:
       vpc:
@@ -1198,8 +1105,98 @@ Environments:
           engine_version: "6.x"
           node_type: "cache.t4g.medium"
 
-  management:
+  master:
     Resources:
+      org_units:
+        inputs:
+        - name: "development"
+          parent_id: *org_id
+        - name: "management"
+          parent_id: *org_id
+        - name: "production"
+          parent_id: *org_id
+        - name: "security"
+          parent_id: *org_id
+      accounts:
+        inputs:
+          us-dev:
+            account_name: "cloudon_dev"
+            account_email: "aws_env_dev@cloudon.work"
+            ou: "ou-XXXX-XXXXXXXX"
+          us-stg:
+            account_name: "cloudon_stg"
+            account_email: "aws_env_stg@cloudon.work"
+            ou: "ou-XXXX-XXXXXXXX"
+          us-prod:  
+            account_name: "cloudon_eu_prod"
+            account_email: "aws_env_eu_prod@cloudon.work"
+            ou: "ou-XXXX-XXXXXXXX"
+          eu-stg:
+            account_name: "cloudon_eu_stg"
+            account_email: "aws_env_eu_stg@cloudon.work"  
+            ou: "ou-XXXX-XXXXXXXX"
+          eu-prod:  
+            account_name: "cloudon_eu_prod"
+            account_email: "aws_env_eu_prod@cloudon.work"
+            ou: "ou-XXXX-XXXXXXXX"
+          management:
+            account_name: "cloudon_master"
+            account_email: "aws_masters@cloudon.work" 
+            ou: "ou-XXXX-XXXXXXXX"
+          security:
+            account_name: "security"
+            account_email: "aws_security@cloudon.work" 
+            ou: "ou-XXXX-XXXXXXXX"
+          log-archive:
+            account_name: "log-archive"
+            account_email: "aws_log_archive@cloudon.work"   
+            ou: "ou-XXXX-XXXXXXXX"
+          global:
+            account_name: "cloudon_global"
+            account_email: "aws_env_global@cloudon.work"  
+            ou: "ou-XXXX-XXXXXXXX"
+          network:
+            account_name: "network"
+            account_email: "aws_network@cloudon.work"
+            ou: "ou-XXXX-XXXXXXXX"    
+      iam:
+        inputs:
+          policies:  
+          roles:    
+          users:
+            inputs:
+            - name: "user1"
+              policy_arns:
+              - "arn:aws:iam::XXXXXXXX:policy/user_policy"
+          groups:
+            inputs:
+            - name: "admins"
+              users:
+              - "admin1"
+              - "admin2"
+              group: "Admins"
+            - name: "devops"
+              users:
+              - "user1"
+              - "user2"
+              - "user3"
+              group: "devops"
+            - name: "data-engineers"
+              users:
+              - "user1"
+              - "user2"
+              - "user3"
+              group: "data-engineers"
+            - name: "developers"
+              users:
+              - "user1"
+              - "user2"
+              - "user3"
+              group: "developers"
+            - name: "qa"
+              users:
+              - "user1"
+              group: "qa"
 
   network:
     Resources:
@@ -1242,6 +1239,31 @@ Environments:
 
   security:
     resources:
+      eventbridge:
+        inputs:
+          rules:
+          - name: "security-alerts"
+            description: "Security alerts"
+            event_pattern: 
+              source: ["aws.securityhub"]
+              detail-type: ["Security Hub Findings - Custom Action"]
+              detail:
+                findings:
+                  severity:
+                    label: ["CRITICAL"]
+          - name: "security-logs"
+            description: "Security logs"
+            event_pattern: 
+              source: ["aws.cloudtrail"]
+              detail-type: ["AWS API Call via CloudTrail"]
+              detail:
+                eventSource: ["s3.amazonaws.com"]
+      sns:
+        inputs:
+          topics:
+            - name: "security-alerts"
+            - name: "security-logs"
+          subscriptions:
 
   log-archive:
     resources:
