@@ -3,7 +3,7 @@ include "common" {
 }
 
 terraform {
-  source = "git::ssh://git@github.com:cloudon-one/aws-terraform-modules.git//aws-terraform-vpc"
+  source = "git::ssh://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-vpc?ref=dev"
 }
 
 locals {
@@ -11,8 +11,12 @@ locals {
   environment   = basename(get_terragrunt_dir())
   location      = basename(dirname(get_terragrunt_dir()))
   resource      = basename(dirname(dirname(get_terragrunt_dir())))
-  resource_vars = local.common_vars["Environments"]["${local.environment}"]["Resources"]["${local.resource}"]
+  resource_vars = local.common_vars["Environments"]["${local.location}-${local.environment}"]["Resources"]["${local.resource}"]
 }
 
-inputs = merge(local.resource_vars["inputs"], {
-})
+inputs = merge(
+  local.resource_vars["inputs"],
+  {
+    
+  }
+)

@@ -17,6 +17,6 @@ locals {
 inputs = merge(
   local.resource_vars["inputs"],
   {
-    # Any additional hardcoded overrides can go here
+    
   }
 )
