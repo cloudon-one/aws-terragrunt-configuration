@@ -12,15 +12,16 @@ terraform {
 
 locals {
   common_vars   = yamldecode(file(find_in_parent_folders("vars.yaml")))
-  resource      = basename(dirname(get_terragrunt_dir())))
-  resource_vars = local.common_vars["Environments"]["Resources"]["${local.resource}"]
+  resource      = basename(get_terragrunt_dir())
+  account       = basename(dirname(get_terragrunt_dir()))
+  resource_vars = local.common_vars["Environments"]["${local.account}"]["Resources"]["${local.resource}"]
 }
 
 inputs = merge(
   local.resource_vars["inputs"],
   {
-    name = "${local.location}-${local.resource}"
-    vpc_id = dependency.vpc.outputs.vpc_id
-    subnet_ids = dependency.vpc.outputs.private_subnets
+    name        = "core-${local.account}-${local.resource}"
+    vpc_id      = dependency.vpc.outputs.vpc_id
+    subnet_ids  = dependency.vpc.outputs.private_subnets
   }
 )

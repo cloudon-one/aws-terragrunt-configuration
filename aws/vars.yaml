@@ -129,7 +129,6 @@ Environments:
           - vpc_name: "core-vpc"
             vpc_cidr: "192.168.201.0/24"
             private_subnets: ["192.168.201.192/26", "192.168.201.128/26"]
-            public_subnets: ["192.168.201.64/26", "192.168.201.0/26"]
             azs: ["us-east-2a", "us-east-2b"]
             enable_nat_gateway: false
             tags:
