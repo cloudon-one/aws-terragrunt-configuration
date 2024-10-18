@@ -4,9 +4,7 @@ terraform {
   }
   extra_arguments "non-interactive" {
     commands = [
-      "fmt",
-      "validate",
-      "plan"
+      "apply"
 
     ]
     arguments = [
@@ -28,7 +26,7 @@ remote_state {
     if_exists = "overwrite_terragrunt"
   }
   config = {
-    bucket         = "${local.common_vars.common.owner}-${local.location}-${local.environment}-${local.common_vars.common.statebucketsuffix}"
+    bucket         = "${local.common_vars.common.owner}-${local.common_vars.common.provider}-admin-${local.common_vars.common.statebucketsuffix}"
     key            = "${path_relative_to_include()}/terraform.tfstate"
     region         = local.common_vars.common.default_region
     encrypt        = true

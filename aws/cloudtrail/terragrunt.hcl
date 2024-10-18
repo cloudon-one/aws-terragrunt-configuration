@@ -1,16 +1,18 @@
-terraform {
-  source = "git@git@github.com:cloudon-one/aws-terraform-modules.git/aws-terraform-cloudtrail"
+include "common" {
+  path = find_in_parent_folders("common.hcl")
 }
 
-include "common" {
-  path = "${get_terragrunt_dir()}/common.hcl"
+terraform {
+  source = "git::ssh://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-cloudtrail?ref=dev"
 }
 
 locals {
-  common_vars     = yamldecode(file(find_in_parent_folders("vars.yaml")))
-  environment     = basename(get_terragrunt_dir())
-  resource        = basename(dirname(get_terragrunt_dir()))
-  resource_vars   = local.common_vars.resource["aws"]["${local.resource}"]["${local.environment}"]["resources"]["${local.resource}"]
+  common_vars   = yamldecode(file(find_in_parent_folders("vars.yaml")))
+  environment   = basename(get_terragrunt_dir()) #global
+  account      = basename(dirname(get_terragrunt_dir())) 
+  resource      = basename(dirname(dirname(get_terragrunt_dir()))) #cloudtrail
+  resource_vars = local.common_vars["Environments"]["${local.location}"]["${local.environment}"]["Resources"]["${local.resource}"]
 }
 
-inputs = merge(local.resource_vars["inputs"], {})
+inputs = merge(
+  local.resource_vars["inputs"],{})
