@@ -102,20 +102,6 @@ Where `<service>` includes:
 - vpc
 - vpn
 
-## Shared Resources
-
-Shared resources are located in the `shared` directory:
-
-```
-shared/
-├── accounts
-└── iam
-    ├── groups
-    ├── policies
-    ├── roles
-    └── users
-```
-
 ## Configuration Files
 
 - `common.hcl`: Contains common Terragrunt configurations.
