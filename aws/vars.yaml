@@ -1,7 +1,7 @@
 common:
   provider: "aws"
   org_id: &org_id "r-XXXXX"
-  terraform_role_arn: "arn:aws:iam::XXXXXXXXXXX:role/terraform"
+  terraform_role_arn: "arn:aws:iam::307990089504:role/terraform"
   default_region: &DefReg "us-east-2"
   eu_region: &EUReg "eu-west-2"
   statebucketsuffix: tf-state-01
@@ -112,11 +112,13 @@ Environments:
           s3_bucket_name: "cloudon-org-s3-cloudtrails-logs-bucket"
           sns_topic_name: "cloudon-org-sns-cloudtrails-logs-topic"
           environment: "dev"
+  
   network:
     Resources:   
       vpc:
         region: *DefReg
         inputs:
+          vpc_configs:
           - vpc_name: "outbound-vpc"
             vpc_cidr: "192.168.200.0/24"
             private_subnets: ["192.168.200.192/26", "192.168.200.128/26"]
@@ -129,7 +131,6 @@ Environments:
           - vpc_name: "core-vpc"
             vpc_cidr: "192.168.201.0/24"
             private_subnets: ["192.168.201.192/26", "192.168.201.128/26"]
-            public_subnets: ["192.168.201.64/26", "192.168.201.0/26"]
             azs: ["us-east-2a", "us-east-2b"]
             enable_nat_gateway: false
             tags:
@@ -139,17 +140,43 @@ Environments:
         region: *DefReg
         inputs:  
           name: "core-tgw"
-          vpc_attachments: 
-          vpc_id: "vpc-XXXXXXXXXX"
-          subnet_ids: 
-          - "subnet-XXXXXXXXXXXXXXXXX"
-          - "subnet-XXXXXXXXXXXXXXXXX"
-          - "subnet-XXXXXXXXXXXXXXXXX"
-          tgw_routes: 
-          - destination_cidr_block: ""
-        tags:
-          Owner: "Terraform"
-          Name: "core-tgw"           
+          ram_principals: #attached accounts ids
+            - 307990089504
+
+          vpc_attachments:
+            us-dev-vpc:
+              subnet_ids: ${dependency.us_dev_vpc.private_subnets}
+              tgw_routes:
+                - destination_cidr_block: "10.32.0.0/16"
+                - destination_cidr_block: "0.0.0.0/0"
+                  blackhole: true
+            us-stg-vpc:
+              subnet_ids: ${dependency.us_stg_vpc.private_subnets}
+              tgw_routes:
+                - destination_cidr_block: "10.31.0.0/16"
+                - destination_cidr_block: "0.0.0.0/0"
+                  blackhole: true      
+            us-prod-vpc:
+              subnet_ids: ${dependency.us_prod_vpc.private_subnets}
+              tgw_routes:
+                - destination_cidr_block: "10.33.0.0/16"
+                - destination_cidr_block: "0.0.0.0/0"
+                  blackhole: true   
+            eu-stg-vpc:
+              subnet_ids: ${dependency.eu_stg_vpc.private_subnets}
+              tgw_routes:
+                - destination_cidr_block: "10.34.0.0/16"
+                - destination_cidr_block: "0.0.0.0/0"
+                  blackhole: true            
+            eu-prod-vpc:
+              subnet_ids: ${dependency.us_prod_vpc.private_subnets}
+              tgw_routes:
+                - destination_cidr_block: "10.35.0.0/16"
+                - destination_cidr_block: "0.0.0.0/0"
+                  blackhole: true        
+            tags:
+              Owner: "Terraform"
+              Name: "core-tgw"           
     
   security:
     Resources:
@@ -844,13 +871,13 @@ Environments:
         region: *EUReg
         inputs:
           vpc_name: "eu-prod-vpc"
-          vpc_cidr: "10.32.0.0/16"
+          vpc_cidr: "10.35.0.0/16"
           azs: ["eu-west-2a", "eu-west-2b", "eu-west-2c"]
-          private_subnets: ["10.32.2.0/24", "10.32.3.0/24", "10.32.1.0/24"]
-          public_subnets: ["10.32.101.0/24", "10.32.102.0/24","10.32.103.0/24"]
-          intra_subnets: ["10.32.8.16/28", "10.32.8.32/28","10.32.8.0/28"]
-          elasticache_subnets: ["10.32.10.0/24", "10.32.12.0/24","10.32.11.0/24"]
-          database_subnets: ["10.32.5.0/24", "10.32.7.0/24","10.32.6.0/24"]
+          private_subnets: ["10.35.2.0/24", "10.35.3.0/24", "10.35.1.0/24"]
+          public_subnets: ["10.35.101.0/24", "10.35.102.0/24","10.35.103.0/24"]
+          intra_subnets: ["10.35.8.16/28", "10.35.8.32/28","10.35.8.0/28"]
+          elasticache_subnets: ["10.35.10.0/24", "10.35.12.0/24","10.35.11.0/24"]
+          database_subnets: ["10.35.5.0/24", "10.35.7.0/24","10.35.6.0/24"]
           database_subnet_names: ["eu-prod-vpc-db-eu-west-2a", "eu-prod-vpc-db-eu-west-2c", "eu-prod-vpc-db-eu-west-2b"]
           private_subnet_names: ["eu-prod-private", "eu-prod-private", "eu-prod-private"]
           public_subnet_names: ["eu-prod-public", "eu-prod-public"]
