@@ -1,121 +1,64 @@
-name: Terragrunt CI
+name: Terraform fmt-and-commit
+
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  TERRAFORM_VERSION: 1.9.8
+  TERRAGRUNT_VERSION: 0.68.4
+  TFLINT_VERSION: "latest"
+
+concurrency:
+  group: terragrunt-ci
+  cancel-in-progress: false
 
 jobs:
-  detect_changes:
+  terraform-fmt-and-commit:
+    name: "terragrunt-fmt-and-commit"
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      changes_detected: ${{ steps.set-matrix.outputs.changes_detected }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: .
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Detect changed directories
-      id: set-matrix
-      run: |
-        echo "Starting change detection process..."
-        
-        echo "Making detect_changes.sh executable..."
-        chmod +x ./detect_changes.sh
-        
-        echo "Executing detect_changes.sh..."
-        OUTPUT=$(./detect_changes.sh 2>&1)
-        RESULT=$?
-        
-        echo "Full output from detect_changes.sh:"
-        echo "$OUTPUT"
-        
-        echo "Extracting JSON output..."
-        JSON_OUTPUT=$(echo "$OUTPUT" | tail -n 1)
-        
-        echo "JSON output:"
-        echo "$JSON_OUTPUT"
-        
-        echo "Setting matrix output..."
-        echo "matrix=$JSON_OUTPUT" >> $GITHUB_OUTPUT
-        
-        echo "Determining if changes were detected..."
-        if [ "$JSON_OUTPUT" == "[]" ]; then
-          echo "No changes detected."
-          echo "changes_detected=false" >> $GITHUB_OUTPUT
-        else
-          echo "Changes detected in the following directories:"
-          echo "$JSON_OUTPUT" | jq -r '.[]'
-          echo "changes_detected=true" >> $GITHUB_OUTPUT
-        fi
-        
-        echo "Change detection process completed."
-        exit $RESULT
-    - name: Debug output
-      run: |
-        echo "Matrix output: ${{ steps.set-matrix.outputs.matrix }}"
-        echo "Changes detected: ${{ steps.set-matrix.outputs.changes_detected }}"
 
-  terragrunt:
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changes_detected == 'true'
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dir: ${{ fromJson(needs.detect_changes.outputs.matrix) }}
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-2
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-    
-    - name: Setup Terragrunt
-      uses: autero1/action-terragrunt@v2.0.0
-      with:
-        terragrunt_version: latest
-    
-    - name: Terragrunt Init
-      run: terragrunt init
-      working-directory: ${{ matrix.dir }}
-    
-    - name: Terragrunt Format
-      run: terragrunt fmt -check
-      working-directory: ${{ matrix.dir }}
-    
-    - name: Terragrunt Plan
-      run: terragrunt plan -out=tfplan
-      continue-on-error: true
-      working-directory: ${{ matrix.dir }}
-    
-    - name: Upload Plan
-      uses: actions/upload-artifact@v3
-      with:
-        name: tfplan-${{ matrix.dir }}
-        path: ${{ matrix.dir }}/tfplan
-    
-    - name: Terragrunt Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: |
-        echo "Do you want to apply the changes? (yes/no)"
-        read -r apply_changes
-        if [ "$apply_changes" == "yes" ]; then
-          terragrunt apply tfplan
-        else
-          echo "Changes were not applied."
-        fi
-      working-directory: ${{ matrix.dir }}
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  no_changes:
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changes_detected == 'false'
-    runs-on: ubuntu-latest
-    steps:
-    - name: No changes detected
-      run: echo "No relevant changes detected in Terragrunt configurations or vars.yaml files. Skipping Terragrunt job."
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Install Terragrunt
+        run: |
+          wget -q -O /usr/local/bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${{ env.TERRAGRUNT_VERSION }}/terragrunt_linux_amd64"
+          chmod +x /usr/local/bin/terragrunt
+          terragrunt -v
+
+      - name: Install TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+
+      - name: Terraform fmt (For .tf files)
+        run: terraform fmt -recursive
+  
+      - name: Terragrunt hclfmt (For .hcl files)
+        run: terragrunt hclfmt
+
+      - name: TFLint Recursive
+        run: tflint --recursive --fix --color
+
+      - name: Git Status
+        run: git status
+
+      - name: Commit changes
+        if: ${{ github.ref_name != 'main' }}
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: '.'
+          message: 'Format Terraform and Terragrunt files'
+          author_name: 'GitHub Actions[bot]'
+          author_email: 'actions@github.com[noreply]'
