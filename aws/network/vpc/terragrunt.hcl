@@ -13,9 +13,8 @@ locals {
   resource_vars = local.common_vars["Environments"]["${local.account}"]["Resources"]["${local.resource}"]
 }
 
-inputs = merge(
-  local.resource_vars["inputs"],
-  {
-    
-  }
-)
+inputs = {
+  vpc_configs = [
+    for vpc_key, vpc_config in local.resource_vars["inputs"] : vpc_config
+  ]
+}
