@@ -74,8 +74,8 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         run: |
           echo "ENV=dev" >> $GITHUB_ENV
-          echo "ACCOUNT=sandbox" >> $GITHUB_ENV
-          echo "REGION=eu-west-1" >> $GITHUB_ENV
+          echo "ACCOUNT=dev" >> $GITHUB_ENV
+          echo "REGION=us-east-2" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v3
