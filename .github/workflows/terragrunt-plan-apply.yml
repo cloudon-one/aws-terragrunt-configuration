@@ -1,0 +1,244 @@
+name: Terragrunt plan-apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        type: choice
+        description: Select desired environment for execute Terrafrom plan
+        options:
+          - dev
+          - qa
+          - prod
+        required: true
+        default: dev
+      account:
+        type: choice
+        description: Select desired account for execute Terrafrom plan
+        options:
+          - sandbox
+          - dev
+          - prod
+          - devops
+        required: true
+        default: sandbox
+      region:
+        type: choice
+        description: Select desired region for execute Terrafrom plan
+        options:
+          - eu-west-1
+          - eu-west-2
+          - us-east-1
+          - us-east-2
+        required: true 
+        default: us-east-2
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  PUBLISH_RESULTS: true
+  TERRAFORM_VERSION: 1.9.8
+  TERRAGRUNT_VERSION: 0.68.4
+  TFSCAN_VERSION: "latest"
+  TFLINT_VERSION: "latest"
+  ORG_NAME: "labs"
+  SUCCESSFUL_ICON: ✅
+  FAILED_ICON: ⚠️
+
+permissions:
+  id-token: write
+  issues: write
+  contents: read
+
+concurrency:
+  group: terraform-ci
+  cancel-in-progress: false
+
+jobs:
+  terraform-plan-and-apply:
+    name: "terraform-plan-and-apply"
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.env || 'dev' }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: .
+    steps:
+
+      # Set default values for all events except workflow_dispatch
+      - name: Set default environment variables for non-dispatch events
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          echo "ENV=dev" >> $GITHUB_ENV
+          echo "ACCOUNT=sandbox" >> $GITHUB_ENV
+          echo "REGION=eu-west-1" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region || env.REGION }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Install Terragrunt
+        run: |
+          wget -q -O /usr/local/bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${{ env.TERRAGRUNT_VERSION }}/terragrunt_linux_amd64"
+          chmod +x /usr/local/bin/terragrunt
+          terragrunt -v
+
+      - name: Install TFSEC
+        run: |
+          curl -sSfL https://github.com/aquasecurity/tfsec/releases/${{ env.TFSCAN_VERSION }}/download/tfsec-linux-amd64 -o /usr/local/bin/tfsec
+          chmod +x /usr/local/bin/tfsec
+          tfsec -v
+
+      - name: Install TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+
+      - name: Terraform fmt (For .tf files)
+        run: terraform fmt -recursive -check -diff
+        continue-on-error: true
+
+      - name: Terragrunt hclfmt (For .hcl files)
+        run: terragrunt hclfmt --terragrunt-check --terragrunt-diff
+        continue-on-error: true
+
+      #  Best practices, deprecated syntax, unused declarations, naming conventions...
+      - name: TFLint Recursive
+        id: tflint
+        run: |
+          set +e
+          tflint --recursive --color
+          if [ $? != 0 ]; then
+            tflint --recursive --fix --format compact > tflint-error.log
+            for file in $(git diff --name-only); do
+              echo -e "\n---------------------------------------------------------------------------------\n"
+              git diff "${file}"
+            done
+          fi
+          set -e
+        continue-on-error: true
+
+      # Security solutions for Terraform
+      - name: TFSEC scan
+        run: tfsec . --format default
+        continue-on-error: true
+
+      - name: Terragrunt Init
+        run: terragrunt run-all init --terragrunt-non-interactive
+        working-directory: "${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
+
+      - name: Terragrunt Validate
+        run: terragrunt run-all validate
+        working-directory: "${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
+
+      - name: Terragrunt Plan
+        run: terragrunt run-all plan --terragrunt-non-interactive
+        working-directory: "${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
+
+      - name: Set dynamic issue title and body
+        if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+        run: |
+          WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "ISSUE_TITLE=${{ github.actor }}'s request." >> $GITHUB_ENV
+          echo "ISSUE_BODY=Please approve or deny Terraform **apply** request.<br /><ins>Triggered by:</ins> **${{ github.actor }}**.<br /><ins>Event:</ins> **${{ github.event_name }}**.<br /><ins>Branch:</ins> **${{ github.ref_name }}**.<br /><ins>Workflow URL:</ins> [**View Workflow Run**](${WORKFLOW_URL})" >> $GITHUB_ENV
+          
+      - name: Approve Terragrunt Apply
+        uses: trstringer/manual-approval@v1
+        if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: user1,user2
+          minimum-approvals: 1
+          issue-title: ${{ env.ISSUE_TITLE }}
+          issue-body: ${{ env.ISSUE_BODY }}
+          exclude-workflow-initiator-as-approver: false
+          timeout-minutes: 180
+
+      - name: Terragrunt Apply
+        if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+        run: terragrunt run-all apply --terragrunt-non-interactive
+        working-directory: "${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
+
+      - name: Publish Terraform fmt results
+        if: always() && env.PUBLISH_RESULTS == 'true'
+        run: |
+          set +e; terraform fmt -recursive -check > fmt-error.log; set -e
+          fileLength=$(wc -l < fmt-error.log)
+          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
+          (
+            echo "## ${icon} Terraform fmt [${fileLength} issue(s) found]"
+            echo "| #     | tf Files |"
+            echo "|-------|----------|"
+            index=1
+            for line in $(cat fmt-error.log); do
+              echo "| ${index} | ${line} |"
+              ((index++))
+            done
+            echo "---"; echo "---"; echo "---";
+          ) > fmt-output.md
+          cat fmt-output.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish Terragrunt hclfmt results
+        if: always() && env.PUBLISH_RESULTS == 'true'
+        run: |
+          set +e; terragrunt hclfmt --terragrunt-check 2> hclfmt-error.log; set -e
+          sed -i -e 's/* Invalid file format //g' -e '1d' -e '$d' -e '/^$/d' hclfmt-error.log
+          fileLength=$(wc -l < hclfmt-error.log)
+          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
+          (
+            echo "## ${icon} Terragrunt hclfmt [${fileLength} issue(s) found]"
+            echo "| #     | hcl Files |"
+            echo "|-------|-----------|"
+            index=1
+            for just in $(cat hclfmt-error.log); do
+              echo "| ${index} | ${just} |"
+              ((index++))
+            done
+            echo "---"; echo "---"; echo "---";
+          ) > hclfmt-output.md
+          cat hclfmt-output.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish TFLint results
+        if: always() && env.PUBLISH_RESULTS == 'true'
+        run: |
+          [ ! -f tflint-error.log ] && exit 1
+          sed -i -e '1d' -e '/./,$!d' tflint-error.log
+          fileLength=$(wc -l < tflint-error.log)
+          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
+          echo "## ${icon} TFLint [${fileLength} issue(s) found]" > tflint.md
+          echo "| #     | Files |" >> tflint.md
+          echo "|-------|-------|" >> tflint.md
+          index=1
+          while IFS= read -r line; do
+            echo "| ${index} | ${line} |" >> tflint.md
+            ((index++))
+          done < tflint-error.log
+          echo "---" >> tflint.md; echo "---" >> tflint.md; echo "---" >> tflint.md;
+          cat tflint.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish TFSEC results
+        if: always() && env.PUBLISH_RESULTS == 'true'
+        run: |
+          tfsec . --format markdown --out tfsec.md --soft-fail
+          sed -i '1,3d' tfsec.md
+          fileLength=$(wc -l < tfsec.md)
+          fileLength=$(expr ${fileLength} - 3)
+          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
+          sed -i "1i\## ${icon} TFSec [${fileLength} issue(s) found]" tfsec.md
+          cat tfsec.md >> $GITHUB_STEP_SUMMARY
