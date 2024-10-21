@@ -189,7 +189,7 @@ jobs:
       - name: Terragrunt Apply
         if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
         run: terragrunt run-all apply --terragrunt-non-interactive
-        working-directory: "${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
+        working-directory: ${{ env.TERRAGRUNT_DIR }}
 
       - name: Publish Terraform fmt results
         if: always() && env.PUBLISH_RESULTS == 'true'
