@@ -16,6 +16,7 @@ on:
         type: choice
         description: Select desired account for execute Terrafrom plan
         options:
+          - sandbox
           - dev
           - prod
           - devops
@@ -25,9 +26,7 @@ on:
         type: choice
         description: Select desired region for execute Terrafrom plan
         options:
-          - eu-west-1
           - eu-west-2
-          - us-east-1
           - us-east-2
         required: true 
         default: us-east-2
@@ -65,7 +64,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: .
     steps:
 
       # Set default values for all events except workflow_dispatch
@@ -74,7 +72,7 @@ jobs:
         run: |
           echo "ENV=dev" >> $GITHUB_ENV
           echo "ACCOUNT=dev" >> $GITHUB_ENV
-          echo "REGION=eu-west-1" >> $GITHUB_ENV
+          echo "REGION=us-east-2" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -84,7 +82,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ github.event.inputs.region || env.REGION }}
+          aws-region: ${{ github.event.inputs.region || 'eu-west-1' }}
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
@@ -109,15 +107,27 @@ jobs:
         with:
           tflint_version: ${{ env.TFLINT_VERSION }}
 
+      - name: Find Terragrunt configuration
+        id: find-terragrunt
+        run: |
+          TERRAGRUNT_DIR=$(find . -name "terragrunt.hcl" -exec dirname {} \; | head -n 1)
+          if [ -z "$TERRAGRUNT_DIR" ]; then
+            echo "Error: No terragrunt.hcl file found in the repository."
+            exit 1
+          fi
+          echo "TERRAGRUNT_DIR=$TERRAGRUNT_DIR" >> $GITHUB_ENV
+          echo "Found Terragrunt configuration in: $TERRAGRUNT_DIR"
+
       - name: Terraform fmt (For .tf files)
         run: terraform fmt -recursive -check -diff
+        working-directory: ${{ env.TERRAGRUNT_DIR }}
         continue-on-error: true
 
       - name: Terragrunt hclfmt (For .hcl files)
         run: terragrunt hclfmt --terragrunt-check --terragrunt-diff
+        working-directory: ${{ env.TERRAGRUNT_DIR }}
         continue-on-error: true
 
-      #  Best practices, deprecated syntax, unused declarations, naming conventions...
       - name: TFLint Recursive
         id: tflint
         run: |
@@ -131,11 +141,12 @@ jobs:
             done
           fi
           set -e
+        working-directory: ${{ env.TERRAGRUNT_DIR }}
         continue-on-error: true
 
-      # Security solutions for Terraform
       - name: TFSEC scan
         run: tfsec . --format default
+        working-directory: ${{ env.TERRAGRUNT_DIR }}
         continue-on-error: true
 
       - name: Set Terragrunt working directory
@@ -178,6 +189,72 @@ jobs:
       - name: Terragrunt Apply
         if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
         run: terragrunt run-all apply --terragrunt-non-interactive
-        working-directory: ${{ env.TERRAGRUNT_DIR }}
+        working-directory: "${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
 
-      # ... (rest of the workflow remains unchanged)
+      - name: Publish Terraform fmt results
+        if: always() && env.PUBLISH_RESULTS == 'true'
+        run: |
+          set +e; terraform fmt -recursive -check > fmt-error.log; set -e
+          fileLength=$(wc -l < fmt-error.log)
+          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
+          (
+            echo "## ${icon} Terraform fmt [${fileLength} issue(s) found]"
+            echo "| #     | tf Files |"
+            echo "|-------|----------|"
+            index=1
+            for line in $(cat fmt-error.log); do
+              echo "| ${index} | ${line} |"
+              ((index++))
+            done
+            echo "---"; echo "---"; echo "---";
+          ) > fmt-output.md
+          cat fmt-output.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish Terragrunt hclfmt results
+        if: always() && env.PUBLISH_RESULTS == 'true'
+        run: |
+          set +e; terragrunt hclfmt --terragrunt-check 2> hclfmt-error.log; set -e
+          sed -i -e 's/* Invalid file format //g' -e '1d' -e '$d' -e '/^$/d' hclfmt-error.log
+          fileLength=$(wc -l < hclfmt-error.log)
+          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
+          (
+            echo "## ${icon} Terragrunt hclfmt [${fileLength} issue(s) found]"
+            echo "| #     | hcl Files |"
+            echo "|-------|-----------|"
+            index=1
+            for just in $(cat hclfmt-error.log); do
+              echo "| ${index} | ${just} |"
+              ((index++))
+            done
+            echo "---"; echo "---"; echo "---";
+          ) > hclfmt-output.md
+          cat hclfmt-output.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish TFLint results
+        if: always() && env.PUBLISH_RESULTS == 'true'
+        run: |
+          [ ! -f tflint-error.log ] && exit 1
+          sed -i -e '1d' -e '/./,$!d' tflint-error.log
+          fileLength=$(wc -l < tflint-error.log)
+          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
+          echo "## ${icon} TFLint [${fileLength} issue(s) found]" > tflint.md
+          echo "| #     | Files |" >> tflint.md
+          echo "|-------|-------|" >> tflint.md
+          index=1
+          while IFS= read -r line; do
+            echo "| ${index} | ${line} |" >> tflint.md
+            ((index++))
+          done < tflint-error.log
+          echo "---" >> tflint.md; echo "---" >> tflint.md; echo "---" >> tflint.md;
+          cat tflint.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish TFSEC results
+        if: always() && env.PUBLISH_RESULTS == 'true'
+        run: |
+          tfsec . --format markdown --out tfsec.md --soft-fail
+          sed -i '1,3d' tfsec.md
+          fileLength=$(wc -l < tfsec.md)
+          fileLength=$(expr ${fileLength} - 3)
+          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
+          sed -i "1i\## ${icon} TFSec [${fileLength} issue(s) found]" tfsec.md
+          cat tfsec.md >> $GITHUB_STEP_SUMMARY
