@@ -16,7 +16,6 @@ on:
         type: choice
         description: Select desired account for execute Terrafrom plan
         options:
-          - sandbox
           - dev
           - prod
           - devops
@@ -26,7 +25,9 @@ on:
         type: choice
         description: Select desired region for execute Terrafrom plan
         options:
+          - eu-west-1
           - eu-west-2
+          - us-east-1
           - us-east-2
         required: true 
         default: us-east-2
@@ -43,7 +44,7 @@ env:
   TERRAGRUNT_VERSION: 0.68.4
   TFSCAN_VERSION: "latest"
   TFLINT_VERSION: "latest"
-  ORG_NAME: "labs"
+  #ORG_NAME: "labs"
   SUCCESSFUL_ICON: ✅
   FAILED_ICON: ⚠️
 
@@ -65,15 +66,6 @@ jobs:
       run:
         shell: bash
     steps:
-
-      # Set default values for all events except workflow_dispatch
-      - name: Set default environment variables for non-dispatch events
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          echo "ENV=dev" >> $GITHUB_ENV
-          echo "ACCOUNT=dev" >> $GITHUB_ENV
-          echo "REGION=us-east-2" >> $GITHUB_ENV
-
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -82,7 +74,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ github.event.inputs.region || 'eu-west-1' }}
+          aws-region: ${{ github.event.inputs.region || 'us-east-2' }}
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
@@ -107,65 +99,82 @@ jobs:
         with:
           tflint_version: ${{ env.TFLINT_VERSION }}
 
-      - name: Find Terragrunt configuration
+      - name: Find Terragrunt configurations
         id: find-terragrunt
         run: |
-          TERRAGRUNT_DIR=$(find . -name "terragrunt.hcl" -exec dirname {} \; | head -n 1)
-          if [ -z "$TERRAGRUNT_DIR" ]; then
-            echo "Error: No terragrunt.hcl file found in the repository."
+          TERRAGRUNT_DIRS=$(find . -name "terragrunt.hcl" -exec dirname {} \; | sort -u)
+          if [ -z "$TERRAGRUNT_DIRS" ]; then
+            echo "Error: No terragrunt.hcl files found in the repository."
             exit 1
           fi
-          echo "TERRAGRUNT_DIR=$TERRAGRUNT_DIR" >> $GITHUB_ENV
-          echo "Found Terragrunt configuration in: $TERRAGRUNT_DIR"
+          echo "TERRAGRUNT_DIRS<<EOF" >> $GITHUB_ENV
+          echo "$TERRAGRUNT_DIRS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "Found Terragrunt configurations in:"
+          echo "$TERRAGRUNT_DIRS"
 
       - name: Terraform fmt (For .tf files)
-        run: terraform fmt -recursive -check -diff
-        working-directory: ${{ env.TERRAGRUNT_DIR }}
+        run: |
+          for dir in $TERRAGRUNT_DIRS; do
+            echo "Running terraform fmt in $dir"
+            terraform fmt -recursive -check -diff $dir
+          done
         continue-on-error: true
 
       - name: Terragrunt hclfmt (For .hcl files)
-        run: terragrunt hclfmt --terragrunt-check --terragrunt-diff
-        working-directory: ${{ env.TERRAGRUNT_DIR }}
+        run: |
+          for dir in $TERRAGRUNT_DIRS; do
+            echo "Running terragrunt hclfmt in $dir"
+            terragrunt hclfmt --terragrunt-check --terragrunt-diff --terragrunt-working-dir $dir
+          done
         continue-on-error: true
 
       - name: TFLint Recursive
         id: tflint
         run: |
-          set +e
-          tflint --recursive --color
-          if [ $? != 0 ]; then
-            tflint --recursive --fix --format compact > tflint-error.log
-            for file in $(git diff --name-only); do
-              echo -e "\n---------------------------------------------------------------------------------\n"
-              git diff "${file}"
-            done
-          fi
-          set -e
-        working-directory: ${{ env.TERRAGRUNT_DIR }}
+          for dir in $TERRAGRUNT_DIRS; do
+            echo "Running TFLint in $dir"
+            set +e
+            tflint --recursive --color $dir
+            if [ $? != 0 ]; then
+              tflint --recursive --fix --format compact $dir > tflint-error-$dir.log
+              for file in $(git diff --name-only); do
+                echo -e "\n---------------------------------------------------------------------------------\n"
+                git diff "${file}"
+              done
+            fi
+            set -e
+          done
         continue-on-error: true
 
       - name: TFSEC scan
-        run: tfsec . --format default
-        working-directory: ${{ env.TERRAGRUNT_DIR }}
+        run: |
+          for dir in $TERRAGRUNT_DIRS; do
+            echo "Running TFSEC scan in $dir"
+            tfsec $dir --format default
+          done
         continue-on-error: true
 
-      - name: Set Terragrunt working directory
-        run: |
-          TERRAGRUNT_DIR="${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
-          echo "TERRAGRUNT_DIR=${TERRAGRUNT_DIR}" >> $GITHUB_ENV
-          mkdir -p ${TERRAGRUNT_DIR}
-
       - name: Terragrunt Init
-        run: terragrunt run-all init --terragrunt-non-interactive
-        working-directory: ${{ env.TERRAGRUNT_DIR }}
+        run: |
+          for dir in $TERRAGRUNT_DIRS; do
+            echo "Running terragrunt init in $dir"
+            terragrunt run-all init --terragrunt-non-interactive --terragrunt-working-dir $dir
+          done
 
       - name: Terragrunt Validate
-        run: terragrunt run-all validate
-        working-directory: ${{ env.TERRAGRUNT_DIR }}
+        run: |
+          for dir in $TERRAGRUNT_DIRS; do
+            echo "Running terragrunt validate in $dir"
+            terragrunt run-all validate --terragrunt-working-dir $dir
+          done
 
       - name: Terragrunt Plan
-        run: terragrunt run-all plan --terragrunt-non-interactive
-        working-directory: ${{ env.TERRAGRUNT_DIR }}
+        run: |
+          for dir in $TERRAGRUNT_DIRS; do
+            echo "Running terragrunt plan in $dir"
+            terragrunt run-all plan --terragrunt-non-interactive --terragrunt-working-dir $dir
+          done
 
       - name: Set dynamic issue title and body
         if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
@@ -188,8 +197,11 @@ jobs:
 
       - name: Terragrunt Apply
         if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
-        run: terragrunt run-all apply --terragrunt-non-interactive
-        working-directory: "${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
+        run: |
+          for dir in $TERRAGRUNT_DIRS; do
+            echo "Running terragrunt apply in $dir"
+            terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir $dir
+          done
 
       - name: Publish Terraform fmt results
         if: always() && env.PUBLISH_RESULTS == 'true'
