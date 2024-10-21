@@ -1,4 +1,4 @@
-name: Terraform fmt-and-commit
+name: terragrunt fmt-and-commit
 
 on:
   workflow_dispatch:
