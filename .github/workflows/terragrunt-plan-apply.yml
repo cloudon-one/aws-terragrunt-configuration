@@ -43,7 +43,7 @@ env:
   TERRAGRUNT_VERSION: 0.68.4
   TFSCAN_VERSION: "latest"
   TFLINT_VERSION: "latest"
-  ORG_NAME: "labs"
+  #ORG_NAME: "labs"
   SUCCESSFUL_ICON: ✅
   FAILED_ICON: ⚠️
 
@@ -151,7 +151,7 @@ jobs:
 
       - name: Set Terragrunt working directory
         run: |
-          TERRAGRUNT_DIR="${{ env.ORG_NAME }}/${{ github.event.inputs.env || env.ENV }}/aws/${{ github.event.inputs.account || env.ACCOUNT }}/${{ github.event.inputs.region || env.REGION }}"
+          TERRAGRUNT_DIR=${{ env.TERRAGRUNT_DIR }}
           echo "TERRAGRUNT_DIR=${TERRAGRUNT_DIR}" >> $GITHUB_ENV
           mkdir -p ${TERRAGRUNT_DIR}
 
