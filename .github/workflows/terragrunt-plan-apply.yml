@@ -292,20 +292,48 @@ jobs:
 
       - name: Backup Terraform State
         run: |
+          # Set timestamp for backup
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          
+          # Ensure we have a valid state bucket name
+          if [ -z "${{ vars.TERRAFORM_STATE_BUCKET }}" ]; then
+            echo "Error: TERRAFORM_STATE_BUCKET variable is not set"
+            exit 1
+          fi
+          
+          # Set backup bucket name
           BACKUP_BUCKET="${{ vars.TERRAFORM_STATE_BUCKET }}-backup"
           
           # Create backup bucket if it doesn't exist
-          aws s3api create-bucket --bucket "$BACKUP_BUCKET" --region ${{ env.AWS_REGION }} || true
+          echo "Creating backup bucket $BACKUP_BUCKET if it doesn't exist..."
+          if ! aws s3api head-bucket --bucket "$BACKUP_BUCKET" 2>/dev/null; then
+            aws s3api create-bucket \
+              --bucket "$BACKUP_BUCKET" \
+              --region "${{ env.AWS_REGION }}" \
+              --create-bucket-configuration LocationConstraint="${{ env.AWS_REGION }}" || true
+          fi
           
           # Enable versioning on the backup bucket
-          aws s3api put-bucket-versioning --bucket "$BACKUP_BUCKET" --versioning-configuration Status=Enabled
+          echo "Enabling versioning on bucket $BACKUP_BUCKET..."
+          aws s3api put-bucket-versioning \
+            --bucket "$BACKUP_BUCKET" \
+            --versioning-configuration Status=Enabled
           
-          # Sync state files to backup location
+          # Create a backup for each directory
+          echo "Starting state backup process..."
           echo '${{ needs.pre-checks.outputs.terraform_dirs }}' | jq -r '.[]' | while read -r dir; do
-            aws s3 cp "s3://${{ vars.TERRAFORM_STATE_BUCKET }}/$dir/terraform.tfstate" \
-              "s3://$BACKUP_BUCKET/backup_${TIMESTAMP}/$dir/terraform.tfstate" || true
+            # Remove leading ./
+            CLEAN_DIR=${dir#./}
+            echo "Processing directory: $CLEAN_DIR"
+            
+            # Attempt to copy state file
+            aws s3 cp \
+              "s3://${{ vars.TERRAFORM_STATE_BUCKET }}/${CLEAN_DIR}/terraform.tfstate" \
+              "s3://${BACKUP_BUCKET}/backup_${TIMESTAMP}/${CLEAN_DIR}/terraform.tfstate" || \
+              echo "No state file found for ${CLEAN_DIR}"
           done
+          
+          echo "Backup process completed"
 
   terraform-plan-and-apply:
     name: "Terragrunt Plan and Apply"
