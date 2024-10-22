@@ -4,7 +4,7 @@ common:
   terraform_role_arn: "arn:aws:iam::307990089504:role/terraform"
   default_region: &DefReg "us-east-2"
   eu_region: &EUReg "eu-west-2"
-  statebucketsuffix: tf-state-01
+  statebucketsuffix: tf-state-001
   owner: "cloudon"
   common_tags:
     owner: "cloudon"
@@ -205,6 +205,12 @@ Environments:
             - name: "security-alerts"
             - name: "security-logs"
           subscriptions:
+            - id: "security-alerts-notification"
+              protocol: "lambda"
+              topic: "security-alerts"
+            - id: "security-logs-notification"
+              protocol: "sqs"
+              topic: "security-log-notification" 
 
   us-dev:
     Resources:
