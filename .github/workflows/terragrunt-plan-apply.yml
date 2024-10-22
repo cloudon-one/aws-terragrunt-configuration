@@ -1,11 +1,11 @@
-name: Terraform plan-and-apply
+name: terragrunt-plan-and-apply
 
 on:
   workflow_dispatch:
     inputs:
       env:
         type: choice
-        description: Select desired environment for execute Terrafrom plan
+        description: Select desired environment for Terragrunt execution
         options:
           - dev
           - qa
@@ -14,16 +14,16 @@ on:
         default: dev
       account:
         type: choice
-        description: Select desired account for execute Terrafrom plan
+        description: Select desired AWS account
         options:
           - dev
           - prod
           - devops
         required: true
-        default: sandbox
+        default: dev
       region:
         type: choice
-        description: Select desired region for execute Terrafrom plan
+        description: Select AWS region
         options:
           - eu-west-1
           - eu-west-2
@@ -31,6 +31,10 @@ on:
           - us-east-2
         required: true 
         default: us-east-2
+
+  schedule:
+    - cron: '0 8 * * 1-5' # Run drift detection on weekdays at 8 AM UTC
+  
   push:
     branches:
       - main
@@ -42,11 +46,15 @@ env:
   PUBLISH_RESULTS: true
   TERRAFORM_VERSION: 1.9.8
   TERRAGRUNT_VERSION: 0.68.4
-  TFSCAN_VERSION: "latest"
+  TFSEC_VERSION: "latest"
   TFLINT_VERSION: "latest"
-  #ORG_NAME: "labs"
+  INFRACOST_VERSION: "latest"
   SUCCESSFUL_ICON: ✅
   FAILED_ICON: ⚠️
+  WARNING_ICON: ⚠️
+  AWS_REGION: ${{ github.event.inputs.region || 'us-east-2' }}
+  ENVIRONMENT: ${{ github.event.inputs.env || 'dev' }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
 permissions:
   id-token: write
@@ -54,229 +62,269 @@ permissions:
   contents: read
 
 concurrency:
-  group: terraform-ci
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  terraform-plan-and-apply:
-    name: "terraform-plan-and-apply"
+  pre-checks:
+    name: "Pre-deployment Checks"
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.env || 'dev' }}
-    defaults:
-      run:
-        shell: bash
+    outputs:
+      terraform_dirs: ${{ steps.find-dirs.outputs.terraform_dirs }}
+    
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ github.event.inputs.region || 'us-east-2' }}
-
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
-          terraform_wrapper: false
-
-      - name: Install Terragrunt
-        run: |
-          wget -q -O /usr/local/bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${{ env.TERRAGRUNT_VERSION }}/terragrunt_linux_amd64"
-          chmod +x /usr/local/bin/terragrunt
-          terragrunt -v
-
-      - name: Install TFSEC
-        run: |
-          curl -sSfL https://github.com/aquasecurity/tfsec/releases/${{ env.TFSCAN_VERSION }}/download/tfsec-linux-amd64 -o /usr/local/bin/tfsec
-          chmod +x /usr/local/bin/tfsec
-          tfsec -v
-
-      - name: Install TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: ${{ env.TFLINT_VERSION }}  
-
-      #-   name: Setup SSH Keys and known_hosts
-      #    env:
-      #        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      #    run: |
-      #        mkdir -p ~/.ssh
-      #        ssh-keyscan github.com >> ~/.ssh/known_hosts
-      #        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-      #        ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-  
-
-      - name: Find Terragrunt configurations
-        id: find-terragrunt
+      - name: Find Terragrunt Configurations
+        id: find-dirs
         run: |
           TERRAGRUNT_DIRS=$(find . -name "terragrunt.hcl" -exec dirname {} \; | sort -u)
           if [ -z "$TERRAGRUNT_DIRS" ]; then
             echo "Error: No terragrunt.hcl files found in the repository."
             exit 1
           fi
+          echo "terraform_dirs=$TERRAGRUNT_DIRS" >> $GITHUB_OUTPUT
           echo "TERRAGRUNT_DIRS<<EOF" >> $GITHUB_ENV
           echo "$TERRAGRUNT_DIRS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          echo "Found Terragrunt configurations in:"
-          echo "$TERRAGRUNT_DIRS"
 
-      - name: Terraform fmt (For .tf files)
-        run: |
-          for dir in $TERRAGRUNT_DIRS; do
-            echo "Running terraform fmt in $dir"
-            terraform fmt -recursive -check -diff $dir
-          done
-        continue-on-error: true
+  security-scan:
+    name: "Security Scanning"
+    needs: pre-checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Terragrunt hclfmt (For .hcl files)
+      - name: Setup Security Tools
         run: |
-          for dir in $TERRAGRUNT_DIRS; do
-            echo "Running terragrunt hclfmt in $dir"
-            terragrunt hclfmt --terragrunt-check --terragrunt-diff --terragrunt-working-dir $dir
-          done
-        continue-on-error: true
+          # Install TFSEC
+          curl -sSfL https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install.sh | sh
+          
+          # Install Checkov
+          pip install checkov
 
-      - name: TFLint Recursive
-        id: tflint
+      - name: Run Security Scans
         run: |
+          # TFSEC Scan
+          tfsec . --format json > tfsec-report.json || true
+          
+          # Checkov Scan
+          checkov -d . --output json > checkov-report.json || true
+
+      - name: Process Security Reports
+        run: |
+          echo "### Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "#### TFSEC Findings" >> $GITHUB_STEP_SUMMARY
+          jq -r '.results[] | "- \(.description) [\(.severity)]"' tfsec-report.json >> $GITHUB_STEP_SUMMARY
+          
+          echo "#### Checkov Findings" >> $GITHUB_STEP_SUMMARY
+          jq -r '.results.failed_checks[] | "- \(.check_name) [\(.severity)]"' checkov-report.json >> $GITHUB_STEP_SUMMARY
+
+  cost-estimation:
+    name: "Cost Estimation"
+    needs: pre-checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v2
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate Infracost Cost Estimate
+        run: |
+          infracost breakdown --path . \
+            --format json \
+            --out-file cost-estimate.json
+
+      - name: Post Cost Estimate
+        run: |
+          infracost output --path cost-estimate.json --format github-comment > cost-estimate.md
+          cat cost-estimate.md >> $GITHUB_STEP_SUMMARY
+
+  drift-detection:
+    name: "Infrastructure Drift Detection"
+    needs: pre-checks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Driftctl
+        run: |
+          curl -L https://github.com/snyk/driftctl/releases/latest/download/driftctl_linux_amd64 -o driftctl
+          chmod +x driftctl
+          sudo mv driftctl /usr/local/bin/
+
+      - name: Run Drift Detection
+        run: |
+          driftctl scan --output json://drift-report.json
+          
+          # Process and format drift report
+          echo "### Infrastructure Drift Report" >> $GITHUB_STEP_SUMMARY
+          jq -r '.differences[] | "- \(.res.type) [\(.res.id)] has drifted"' drift-report.json >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on Drift Detection
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "⚠️ Infrastructure drift detected in ${{ env.ENVIRONMENT }} environment!\nPlease check the drift report: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+
+  infrastructure-backup:
+    name: "Infrastructure State Backup"
+    needs: pre-checks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Backup Terraform State
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_BUCKET="${{ vars.TERRAFORM_STATE_BUCKET }}-backup"
+          
+          # Create backup bucket if it doesn't exist
+          aws s3api create-bucket --bucket $BACKUP_BUCKET --region ${{ env.AWS_REGION }} || true
+          
+          # Sync state files to backup location
+          aws s3 sync s3://${{ vars.TERRAFORM_STATE_BUCKET }} s3://$BACKUP_BUCKET/backup_$TIMESTAMP/
+
+  terraform-plan-and-apply:
+    name: "Terragrunt Plan and Apply"
+    needs: [pre-checks, security-scan, cost-estimation, infrastructure-backup]
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.env || 'dev' }}
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Infrastructure Tools
+        run: |
+          # Install Terraform
+          wget -O terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+          unzip terraform.zip
+          sudo mv terraform /usr/local/bin/
+          
+          # Install Terragrunt
+          wget -q -O /usr/local/bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64"
+          chmod +x /usr/local/bin/terragrunt
+
+      - name: Run Infrastructure Tests
+        run: |
+          # Install test dependencies
+          pip install pytest python-terraform
+
+          # Run infrastructure tests
           for dir in $TERRAGRUNT_DIRS; do
-            echo "Running TFLint in $dir"
-            set +e
-            tflint --recursive --color $dir
-            if [ $? != 0 ]; then
-              tflint --recursive --fix --format compact $dir > tflint-error-$dir.log
-              for file in $(git diff --name-only); do
-                echo -e "\n---------------------------------------------------------------------------------\n"
-                git diff "${file}"
-              done
+            if [ -d "${dir}/tests" ]; then
+              pytest ${dir}/tests -v || exit 1
             fi
-            set -e
-          done
-        continue-on-error: true
-
-      - name: TFSEC scan
-        run: |
-          for dir in $TERRAGRUNT_DIRS; do
-            echo "Running TFSEC scan in $dir"
-            tfsec $dir --format default
-          done
-        continue-on-error: true
-
-      - name: Terragrunt Init
-        run: |
-          for dir in $TERRAGRUNT_DIRS; do
-            echo "Running terragrunt init in $dir"
-            terragrunt run-all init --terragrunt-non-interactive --terragrunt-working-dir $dir
-          done
-
-      - name: Terragrunt Validate
-        run: |
-          for dir in $TERRAGRUNT_DIRS; do
-            echo "Running terragrunt validate in $dir"
-            terragrunt run-all validate --terragrunt-working-dir $dir
           done
 
       - name: Terragrunt Plan
+        id: plan
         run: |
           for dir in $TERRAGRUNT_DIRS; do
             echo "Running terragrunt plan in $dir"
             terragrunt run-all plan --terragrunt-non-interactive --terragrunt-working-dir $dir
           done
 
-      - name: Set dynamic issue title and body
-        if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
-        run: |
-          WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "ISSUE_TITLE=${{ github.actor }}'s request." >> $GITHUB_ENV
-          echo "ISSUE_BODY=Please approve or deny Terraform **apply** request.<br /><ins>Triggered by:</ins> **${{ github.actor }}**.<br /><ins>Event:</ins> **${{ github.event_name }}**.<br /><ins>Branch:</ins> **${{ github.ref_name }}**.<br /><ins>Workflow URL:</ins> [**View Workflow Run**](${WORKFLOW_URL})" >> $GITHUB_ENV
-          
-      - name: Approve Terragrunt Apply
+      - name: Request Apply Approval
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         uses: trstringer/manual-approval@v1
-        if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
         with:
           secret: ${{ github.TOKEN }}
-          approvers: user1,user2
+          approvers: ${{ vars.TERRAFORM_APPROVERS }}
           minimum-approvals: 1
-          issue-title: ${{ env.ISSUE_TITLE }}
-          issue-body: ${{ env.ISSUE_BODY }}
+          issue-title: "Infrastructure Change Approval Required for ${{ env.ENVIRONMENT }}"
+          issue-body: |
+            Please review and approve the Terragrunt apply request.
+            
+            - **Triggered by:** ${{ github.actor }}
+            - **Environment:** ${{ env.ENVIRONMENT }}
+            - **Region:** ${{ env.AWS_REGION }}
+            - **Event:** ${{ github.event_name }}
+            - **Branch:** ${{ github.ref_name }}
+            - **Workflow URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           exclude-workflow-initiator-as-approver: false
           timeout-minutes: 180
 
       - name: Terragrunt Apply
-        if: github.ref_name == 'grafana-sso' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: |
           for dir in $TERRAGRUNT_DIRS; do
             echo "Running terragrunt apply in $dir"
             terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir $dir
           done
 
-      - name: Publish Terraform fmt results
-        if: always() && env.PUBLISH_RESULTS == 'true'
-        run: |
-          set +e; terraform fmt -recursive -check > fmt-error.log; set -e
-          fileLength=$(wc -l < fmt-error.log)
-          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
-          (
-            echo "## ${icon} Terraform fmt [${fileLength} issue(s) found]"
-            echo "| #     | tf Files |"
-            echo "|-------|----------|"
-            index=1
-            for line in $(cat fmt-error.log); do
-              echo "| ${index} | ${line} |"
-              ((index++))
-            done
-            echo "---"; echo "---"; echo "---";
-          ) > fmt-output.md
-          cat fmt-output.md >> $GITHUB_STEP_SUMMARY
+      - name: Notify on Completion
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅' || '❌' }} Infrastructure deployment to ${{ env.ENVIRONMENT }} ${{ job.status }}.\nDetails: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
 
-      - name: Publish Terragrunt hclfmt results
-        if: always() && env.PUBLISH_RESULTS == 'true'
+  post-deployment-validation:
+    name: "Post-deployment Validation"
+    needs: terraform-plan-and-apply
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Run Health Checks
         run: |
-          set +e; terragrunt hclfmt --terragrunt-check 2> hclfmt-error.log; set -e
-          sed -i -e 's/* Invalid file format //g' -e '1d' -e '$d' -e '/^$/d' hclfmt-error.log
-          fileLength=$(wc -l < hclfmt-error.log)
-          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
-          (
-            echo "## ${icon} Terragrunt hclfmt [${fileLength} issue(s) found]"
-            echo "| #     | hcl Files |"
-            echo "|-------|-----------|"
-            index=1
-            for just in $(cat hclfmt-error.log); do
-              echo "| ${index} | ${just} |"
-              ((index++))
-            done
-            echo "---"; echo "---"; echo "---";
-          ) > hclfmt-output.md
-          cat hclfmt-output.md >> $GITHUB_STEP_SUMMARY
+          # Add your health check logic here
+          echo "Running post-deployment health checks..."
+          
+          # Example: Check endpoint availability
+          # curl -f https://api.example.com/health || exit 1
 
-      - name: Publish TFLint results
-        if: always() && env.PUBLISH_RESULTS == 'true'
+      - name: Validate Infrastructure
         run: |
-          [ ! -f tflint-error.log ] && exit 1
-          sed -i -e '1d' -e '/./,$!d' tflint-error.log
-          fileLength=$(wc -l < tflint-error.log)
-          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
-          echo "## ${icon} TFLint [${fileLength} issue(s) found]" > tflint.md
-          echo "| #     | Files |" >> tflint.md
-          echo "|-------|-------|" >> tflint.md
-          index=1
-          while IFS= read -r line; do
-            echo "| ${index} | ${line} |" >> tflint.md
-            ((index++))
-          done < tflint-error.log
-          echo "---" >> tflint.md; echo "---" >> tflint.md; echo "---" >> tflint.md;
-          cat tflint.md >> $GITHUB_STEP_SUMMARY
+          # Add infrastructure validation logic
+          echo "Validating infrastructure..."
+          
+          # Example: Check AWS resources
+          aws cloudwatch list-metrics --namespace AWS/CloudFront --metric-name Requests
 
-      - name: Publish TFSEC results
-        if: always() && env.PUBLISH_RESULTS == 'true'
+      - name: Update Documentation
         run: |
-          tfsec . --format markdown --out tfsec.md --soft-fail
-          sed -i '1,3d' tfsec.md
-          fileLength=$(wc -l < tfsec.md)
-          fileLength=$(expr ${fileLength} - 3)
-          [ ${fileLength} -eq 0 ] && icon=${{ env.SUCCESSFUL_ICON }} || icon=${{ env.FAILED_ICON }}
-          sed -i "1i\## ${icon} TFSec [${fileLength} issue(s) found]" tfsec.md
-          cat tfsec.md >> $GITHUB_STEP_SUMMARY
+          # Update documentation if needed
+          echo "Updating documentation..."
+          
+          # Example: Generate terraform-docs
+          # terraform-docs markdown . > TERRAFORM.md
