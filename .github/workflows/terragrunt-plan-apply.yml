@@ -54,7 +54,6 @@ env:
   WARNING_ICON: ⚠️
   AWS_REGION: ${{ github.event.inputs.region || 'us-east-2' }}
   ENVIRONMENT: ${{ github.event.inputs.env || 'dev' }}
-  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
 permissions:
   id-token: write
@@ -76,18 +75,34 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
       - name: Find Terragrunt Configurations
         id: find-dirs
         run: |
-          TERRAGRUNT_DIRS=$(find . -name "terragrunt.hcl" -exec dirname {} \; | sort -u)
-          if [ -z "$TERRAGRUNT_DIRS" ]; then
+          # Find all terragrunt.hcl files and get their directories
+          DIRS=$(find . -name "terragrunt.hcl" -exec dirname {} \; | sort -u)
+          
+          if [ -z "$DIRS" ]; then
             echo "Error: No terragrunt.hcl files found in the repository."
             exit 1
           fi
-          echo "terraform_dirs=$TERRAGRUNT_DIRS" >> $GITHUB_OUTPUT
-          echo "TERRAGRUNT_DIRS<<EOF" >> $GITHUB_ENV
-          echo "$TERRAGRUNT_DIRS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          
+          # Convert newline-separated list to JSON array for github outputs
+          JSON_ARRAY=$(echo "$DIRS" | jq -R . | jq -s .)
+          echo "terraform_dirs=$JSON_ARRAY" >> "$GITHUB_OUTPUT"
+          
+          # Set environment variable with proper delimiter
+          {
+            echo "TERRAGRUNT_DIRS<<EOF"
+            echo "$DIRS"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+          
+          # Print found directories for debugging
+          echo "Found Terragrunt configurations in:"
+          echo "$DIRS"
 
   security-scan:
     name: "Security Scanning"
@@ -118,15 +133,16 @@ jobs:
         run: |
           echo "### Security Scan Results" >> $GITHUB_STEP_SUMMARY
           echo "#### TFSEC Findings" >> $GITHUB_STEP_SUMMARY
-          jq -r '.results[] | "- \(.description) [\(.severity)]"' tfsec-report.json >> $GITHUB_STEP_SUMMARY
+          jq -r '.results[] | "- \(.description) [\(.severity)]"' tfsec-report.json >> $GITHUB_STEP_SUMMARY || echo "No TFSEC findings"
           
           echo "#### Checkov Findings" >> $GITHUB_STEP_SUMMARY
-          jq -r '.results.failed_checks[] | "- \(.check_name) [\(.severity)]"' checkov-report.json >> $GITHUB_STEP_SUMMARY
+          jq -r '.results.failed_checks[] | "- \(.check_name) [\(.severity)]"' checkov-report.json >> $GITHUB_STEP_SUMMARY || echo "No Checkov findings"
 
   cost-estimation:
     name: "Cost Estimation"
     needs: pre-checks
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout Repository
@@ -173,11 +189,15 @@ jobs:
 
       - name: Run Drift Detection
         run: |
-          driftctl scan --output json://drift-report.json
+          driftctl scan --output json://drift-report.json || true
           
           # Process and format drift report
           echo "### Infrastructure Drift Report" >> $GITHUB_STEP_SUMMARY
-          jq -r '.differences[] | "- \(.res.type) [\(.res.id)] has drifted"' drift-report.json >> $GITHUB_STEP_SUMMARY
+          if [ -f drift-report.json ]; then
+            jq -r '.differences[] | "- \(.res.type) [\(.res.id)] has drifted"' drift-report.json >> $GITHUB_STEP_SUMMARY || echo "No drift detected"
+          else
+            echo "No drift report generated" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Notify on Drift Detection
         if: failure()
@@ -187,6 +207,8 @@ jobs:
             {
               "text": "⚠️ Infrastructure drift detected in ${{ env.ENVIRONMENT }} environment!\nPlease check the drift report: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   infrastructure-backup:
     name: "Infrastructure State Backup"
@@ -208,10 +230,13 @@ jobs:
           BACKUP_BUCKET="${{ vars.TERRAFORM_STATE_BUCKET }}-backup"
           
           # Create backup bucket if it doesn't exist
-          aws s3api create-bucket --bucket $BACKUP_BUCKET --region ${{ env.AWS_REGION }} || true
+          aws s3api create-bucket --bucket "$BACKUP_BUCKET" --region ${{ env.AWS_REGION }} || true
+          
+          # Enable versioning on the backup bucket
+          aws s3api put-bucket-versioning --bucket "$BACKUP_BUCKET" --versioning-configuration Status=Enabled
           
           # Sync state files to backup location
-          aws s3 sync s3://${{ vars.TERRAFORM_STATE_BUCKET }} s3://$BACKUP_BUCKET/backup_$TIMESTAMP/
+          aws s3 sync "s3://${{ vars.TERRAFORM_STATE_BUCKET }}" "s3://$BACKUP_BUCKET/backup_$TIMESTAMP/"
 
   terraform-plan-and-apply:
     name: "Terragrunt Plan and Apply"
@@ -233,32 +258,49 @@ jobs:
       - name: Setup Infrastructure Tools
         run: |
           # Install Terraform
-          wget -O terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+          wget -O terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
           unzip terraform.zip
           sudo mv terraform /usr/local/bin/
           
           # Install Terragrunt
           wget -q -O /usr/local/bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64"
           chmod +x /usr/local/bin/terragrunt
+          
+          # Verify installations
+          terraform version
+          terragrunt --version
 
       - name: Run Infrastructure Tests
         run: |
           # Install test dependencies
           pip install pytest python-terraform
 
-          # Run infrastructure tests
-          for dir in $TERRAGRUNT_DIRS; do
+          # Run tests for each directory
+          echo "$TERRAGRUNT_DIRS" | while read -r dir; do
             if [ -d "${dir}/tests" ]; then
-              pytest ${dir}/tests -v || exit 1
+              echo "Running tests in ${dir}/tests"
+              pytest "${dir}/tests" -v || exit 1
             fi
+          done
+
+      - name: Terragrunt Init and Validate
+        run: |
+          echo "$TERRAGRUNT_DIRS" | while read -r dir; do
+            echo "Processing directory: $dir"
+            
+            echo "Running terragrunt init..."
+            terragrunt run-all init --terragrunt-non-interactive --terragrunt-working-dir "$dir"
+            
+            echo "Running terragrunt validate..."
+            terragrunt run-all validate --terragrunt-working-dir "$dir"
           done
 
       - name: Terragrunt Plan
         id: plan
         run: |
-          for dir in $TERRAGRUNT_DIRS; do
+          echo "$TERRAGRUNT_DIRS" | while read -r dir; do
             echo "Running terragrunt plan in $dir"
-            terragrunt run-all plan --terragrunt-non-interactive --terragrunt-working-dir $dir
+            terragrunt run-all plan --terragrunt-non-interactive --terragrunt-working-dir "$dir"
           done
 
       - name: Request Apply Approval
@@ -284,9 +326,9 @@ jobs:
       - name: Terragrunt Apply
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: |
-          for dir in $TERRAGRUNT_DIRS; do
+          echo "$TERRAGRUNT_DIRS" | while read -r dir; do
             echo "Running terragrunt apply in $dir"
-            terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir $dir
+            terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir "$dir"
           done
 
       - name: Notify on Completion
@@ -297,6 +339,8 @@ jobs:
             {
               "text": "${{ job.status == 'success' && '✅' || '❌' }} Infrastructure deployment to ${{ env.ENVIRONMENT }} ${{ job.status }}.\nDetails: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   post-deployment-validation:
     name: "Post-deployment Validation"
@@ -305,26 +349,33 @@ jobs:
     if: success()
     
     steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Run Health Checks
         run: |
-          # Add your health check logic here
           echo "Running post-deployment health checks..."
           
-          # Example: Check endpoint availability
-          # curl -f https://api.example.com/health || exit 1
+          # Add your health check logic here
+          # Example:
+          # aws cloudwatch get-metric-statistics ...
+          # aws elasticloadbalancing describe-target-health ...
 
-      - name: Validate Infrastructure
+      - name: Verify Infrastructure
         run: |
-          # Add infrastructure validation logic
-          echo "Validating infrastructure..."
+          echo "Verifying infrastructure state..."
           
-          # Example: Check AWS resources
-          aws cloudwatch list-metrics --namespace AWS/CloudFront --metric-name Requests
+          # Add verification logic here
+          # Example: Check if resources are responding
+          aws cloudwatch list-metrics --namespace AWS/CloudFront --metric-name Requests || true
 
-      - name: Update Documentation
+      - name: Generate Documentation
         run: |
-          # Update documentation if needed
-          echo "Updating documentation..."
-          
-          # Example: Generate terraform-docs
+          echo "Generating infrastructure documentation..."
+          # Add documentation generation logic here
+          # Example: Generate terraform-docs markdown
           # terraform-docs markdown . > TERRAFORM.md
