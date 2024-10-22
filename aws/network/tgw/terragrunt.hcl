@@ -47,7 +47,7 @@ dependency "eu_prod_vpc" {
 
 
 terraform {
-  source = "git::ssh://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-tgw?ref=dev"
+  source = "git::https://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-tgw?ref=dev"
 }
 
 locals {

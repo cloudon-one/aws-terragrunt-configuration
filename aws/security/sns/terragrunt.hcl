@@ -3,7 +3,7 @@ include "common" {
 }
 
 terraform {
-  source = "git::https://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-core-vpc?ref=dev"
+  source = "git::https://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-sns?ref=dev"
 }
 
 locals {
@@ -14,7 +14,6 @@ locals {
 }
 
 inputs = {
-  vpc_configs = [
-    for vpc_key, vpc_config in local.resource_vars["inputs"] : vpc_config
-  ]
+  topics        = local.resource_vars["inputs"]["topics"]
+  subscriptions = local.resource_vars["inputs"]["subscriptions"]
 }

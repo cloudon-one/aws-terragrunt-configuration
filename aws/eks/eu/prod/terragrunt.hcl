@@ -7,7 +7,7 @@ dependency "vpc" {
 }
 
 terraform {
-  source = "git::ssh://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-eks?ref=dev"
+  source = "git::https://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-eks?ref=dev"
 }
 
 locals {
