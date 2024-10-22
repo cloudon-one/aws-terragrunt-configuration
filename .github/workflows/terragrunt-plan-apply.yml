@@ -392,4 +392,71 @@ jobs:
           approvers: ${{ vars.TERRAFORM_APPROVERS }}
           minimum-approvals: 1
           issue-title: "Infrastructure Change Approval Required for ${{ env.ENVIRONMENT }}"
-          issue-body
+          issue-body: |
+            Please review and approve the Terragrunt apply request.
+            
+            - **Triggered by:** ${{ github.actor }}
+            - **Environment:** ${{ env.ENVIRONMENT }}
+            - **Region:** ${{ env.AWS_REGION }}
+            - **Event:** ${{ github.event_name }}
+            - **Branch:** ${{ github.ref_name }}
+            - **Workflow URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          exclude-workflow-initiator-as-approver: false
+          timeout-minutes: 180
+
+      - name: Terragrunt Apply
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        run: |
+          echo "$TERRAGRUNT_DIRS" | while read -r dir; do
+            echo "Running terragrunt apply in $dir"
+            terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir "$dir"
+          done
+
+      - name: Notify on Completion
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅' || '❌' }} Infrastructure deployment to ${{ env.ENVIRONMENT }} ${{ job.status }}.\nDetails: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  post-deployment-validation:
+    name: "Post-deployment Validation"
+    needs: terraform-plan-and-apply
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run Health Checks
+        run: |
+          echo "Running post-deployment health checks..."
+          
+          # Add your health check logic here
+          # Example:
+          # aws cloudwatch get-metric-statistics ...
+          # aws elasticloadbalancing describe-target-health ...
+
+      - name: Verify Infrastructure
+        run: |
+          echo "Verifying infrastructure state..."
+          
+          # Add verification logic here
+          # Example: Check if resources are responding
+          aws cloudwatch list-metrics --namespace AWS/CloudFront --metric-name Requests || true
+
+      - name: Generate Documentation
+        run: |
+          echo "Generating infrastructure documentation..."
+          # Add documentation generation logic here
+          # Example: Generate terraform-docs markdown
+          # terraform-docs markdown . > TERRAFORM.md
