@@ -4,10 +4,14 @@ include "common" {
 
 dependency "vpc" {
   config_path = "../../../vpc/us/dev"
+  mock_outputs = {
+    vpc_id = "dummy_vpc_id"
+    private_subnets = ["dummy_subnet_0", "dummy_subnet_1"]
+  }
 }
 
 terraform {
-  source = "git::ssh://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-redis?ref=dev"
+  source = "git::https://git@github.com/cloudon-one/aws-terraform-modules.git//aws-terraform-redis?ref=dev"
 }
 
 locals {
