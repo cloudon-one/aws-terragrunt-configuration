@@ -46,7 +46,7 @@ env:
   PUBLISH_RESULTS: true
   TERRAFORM_VERSION: 1.9.8
   TERRAGRUNT_VERSION: 0.68.4
-  TFSEC_VERSION: "latest"
+  TFSEC_VERSION: "v1.28.1"
   TFLINT_VERSION: "latest"
   INFRACOST_VERSION: "latest"
   SUCCESSFUL_ICON: ✅
@@ -132,13 +132,23 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
       - name: Setup Security Tools
         run: |
           # Install TFSEC
-          curl -sSfL https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install.sh | sh
+          wget -q -O tfsec "https://github.com/aquasecurity/tfsec/releases/download/${TFSEC_VERSION}/tfsec-linux-amd64"
+          chmod +x tfsec
+          sudo mv tfsec /usr/local/bin/
+          tfsec --version
           
           # Install Checkov
+          python -m pip install --upgrade pip
           pip install checkov
+          checkov --version
 
       - name: Run Security Scans
         run: |
@@ -254,6 +264,17 @@ jobs:
               jq -r '.differences[] | "- \(.res.type) [\(.res.id)] has drifted"' "$report" >> $GITHUB_STEP_SUMMARY || echo "No drift detected"
             fi
           done
+
+      - name: Notify on Drift Detection
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "⚠️ Infrastructure drift detected in ${{ env.ENVIRONMENT }} environment!\nPlease check the drift report: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   infrastructure-backup:
     name: "Infrastructure State Backup"
@@ -371,20 +392,4 @@ jobs:
           approvers: ${{ vars.TERRAFORM_APPROVERS }}
           minimum-approvals: 1
           issue-title: "Infrastructure Change Approval Required for ${{ env.ENVIRONMENT }}"
-          issue-body: |
-            Please review and approve the Terragrunt apply request.
-            
-            - **Triggered by:** ${{ github.actor }}
-            - **Environment:** ${{ env.ENVIRONMENT }}
-            - **Region:** ${{ env.AWS_REGION }}
-            - **Event:** ${{ github.event_name }}
-            - **Branch:** ${{ github.ref_name }}
-            - **Workflow URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          exclude-workflow-initiator-as-approver: false
-          timeout-minutes: 180
-
-      - name: Terragrunt Apply
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
-        run: |
-          echo '${{ needs.pre-checks.outputs.terraform_dirs }}' | jq -r '.[]' | while read -r dir; do
-            echo "Running terragrunt apply in $
+          issue-body
