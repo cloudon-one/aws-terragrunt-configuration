@@ -290,34 +290,55 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Verify AWS Permissions
+        run: |
+          # Check AWS caller identity
+          aws sts get-caller-identity
+          
+          # Check if we can access the source state bucket
+          if ! aws s3api head-bucket --bucket "${{ vars.TERRAFORM_STATE_BUCKET }}" 2>/dev/null; then
+            echo "Error: Cannot access source state bucket ${{ vars.TERRAFORM_STATE_BUCKET }}"
+            exit 1
+          fi
+
       - name: Backup Terraform State
         run: |
           # Set timestamp for backup
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           
-          # Ensure we have a valid state bucket name
-          if [ -z "${{ vars.TERRAFORM_STATE_BUCKET }}" ]; then
-            echo "Error: TERRAFORM_STATE_BUCKET variable is not set"
-            exit 1
+          # Set bucket names
+          SOURCE_BUCKET="${{ vars.TERRAFORM_STATE_BUCKET }}"
+          BACKUP_BUCKET="${SOURCE_BUCKET}-backup"
+          
+          # Check if backup bucket exists and we have access
+          if aws s3api head-bucket --bucket "${BACKUP_BUCKET}" 2>/dev/null; then
+            echo "Backup bucket ${BACKUP_BUCKET} exists and is accessible"
+          else
+            echo "Checking if bucket exists but we don't have access..."
+            if aws s3api head-bucket --bucket "${BACKUP_BUCKET}" 2>&1 | grep -q 'Forbidden'; then
+              echo "Error: Backup bucket exists but we don't have access"
+              exit 1
+            elif aws s3api head-bucket --bucket "${BACKUP_BUCKET}" 2>&1 | grep -q 'Not Found'; then
+              echo "Backup bucket doesn't exist, creating..."
+              if [[ "${{ env.AWS_REGION }}" == "us-east-1" ]]; then
+                aws s3api create-bucket \
+                  --bucket "${BACKUP_BUCKET}" \
+                  --region "us-east-1"
+              else
+                aws s3api create-bucket \
+                  --bucket "${BACKUP_BUCKET}" \
+                  --region "${{ env.AWS_REGION }}" \
+                  --create-bucket-configuration LocationConstraint="${{ env.AWS_REGION }}"
+              fi
+            fi
           fi
           
-          # Set backup bucket name
-          BACKUP_BUCKET="${{ vars.TERRAFORM_STATE_BUCKET }}-backup"
-          
-          # Create backup bucket if it doesn't exist
-          echo "Creating backup bucket $BACKUP_BUCKET if it doesn't exist..."
-          if ! aws s3api head-bucket --bucket "$BACKUP_BUCKET" 2>/dev/null; then
-            aws s3api create-bucket \
-              --bucket "$BACKUP_BUCKET" \
-              --region "${{ env.AWS_REGION }}" \
-              --create-bucket-configuration LocationConstraint="${{ env.AWS_REGION }}" || true
-          fi
-          
-          # Enable versioning on the backup bucket
-          echo "Enabling versioning on bucket $BACKUP_BUCKET..."
+          # Try to enable versioning (might fail if we don't have permission)
+          echo "Attempting to enable versioning on backup bucket..."
           aws s3api put-bucket-versioning \
-            --bucket "$BACKUP_BUCKET" \
-            --versioning-configuration Status=Enabled
+            --bucket "${BACKUP_BUCKET}" \
+            --versioning-configuration Status=Enabled || \
+            echo "Warning: Could not enable versioning on backup bucket"
           
           # Create a backup for each directory
           echo "Starting state backup process..."
@@ -326,15 +347,28 @@ jobs:
             CLEAN_DIR=${dir#./}
             echo "Processing directory: $CLEAN_DIR"
             
-            # Attempt to copy state file
-            aws s3 cp \
-              "s3://${{ vars.TERRAFORM_STATE_BUCKET }}/${CLEAN_DIR}/terraform.tfstate" \
-              "s3://${BACKUP_BUCKET}/backup_${TIMESTAMP}/${CLEAN_DIR}/terraform.tfstate" || \
+            # Check if source state file exists
+            if aws s3 ls "s3://${SOURCE_BUCKET}/${CLEAN_DIR}/terraform.tfstate" >/dev/null 2>&1; then
+              echo "Backing up state for ${CLEAN_DIR}..."
+              aws s3 cp \
+                "s3://${SOURCE_BUCKET}/${CLEAN_DIR}/terraform.tfstate" \
+                "s3://${BACKUP_BUCKET}/backup_${TIMESTAMP}/${CLEAN_DIR}/terraform.tfstate" || \
+                echo "Warning: Failed to backup state for ${CLEAN_DIR}"
+            else
               echo "No state file found for ${CLEAN_DIR}"
+            fi
           done
           
           echo "Backup process completed"
 
+      - name: Verify Backup
+        run: |
+          BACKUP_BUCKET="${{ vars.TERRAFORM_STATE_BUCKET }}-backup"
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          
+          echo "Verifying backup files..."
+          aws s3 ls "s3://${BACKUP_BUCKET}/backup_${TIMESTAMP}/" --recursive || \
+            echo "Warning: Could not verify backup files"
   terraform-plan-and-apply:
     name: "Terragrunt Plan and Apply"
     needs: [pre-checks, security-scan, cost-estimation, infrastructure-backup]
