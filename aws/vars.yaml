@@ -1307,7 +1307,51 @@ Environments:
           engine_version: "6.x"
           node_type: "cache.t4g.medium"
   
+Platform-tools:
 
+  airflow:
+    Resources:  
+      inputs:
+
+  argocd:
+    Resources:
+      inputs:
+
+  cert-manager:
+    Resources:
+      inputs:
+
+  external-dns:
+    Resources:
+      inputs:
+
+  external-secrets:
+    Resources:
+      inputs:
+
+  istio:
+    Resources:
+      inputs:
+
+  jeager:
+    Resources:
+      inputs:
+
+  karpenter:
+    Resources:
+      inputs:
+
+  kong-ingress:
+    Resources:
+      inputs:
+
+  kubecost:
+    Resources:
+      inputs:
+
+  loki-stack:
+    Resources:
+      inputs:                                    
   
   
 
