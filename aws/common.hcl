@@ -38,9 +38,6 @@ generate "provider" {
   contents  = <<EOF
   provider "aws" {
   region = "${local.common_vars.common.default_region}"
-  assume_role {
-    role_arn = "${local.common_vars.common.terraform_role_arn}"
-  }
 }
 EOF
 }

@@ -1,0 +1,45 @@
+common:
+  vpc_id: "vpc-XXXXXXXXXXXXXX"
+  private_subnet_ids: ["subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX"]
+  region: &DefReg "us-east-2"
+  eks_cluster_name: "dev-eks-cluster"
+  environment: "dev"
+
+
+Platform:
+  Tools: 
+    airflow:
+      inputs:
+        airflow_version: "2.7.1"
+        instance_type: "t3.medium"
+
+    argocd:
+      inputs:
+
+    cert-manager:
+      inputs:
+
+    external-dns:
+      inputs:
+
+    external-secrets:
+      inputs:
+
+    istio:
+      inputs:
+
+    jeager:
+      inputs:
+
+    karpenter:
+      inputs:
+
+    kong-ingress:
+      inputs:
+
+    kubecost:
+      inputs:
+
+    loki-stack:
+      inputs:                                    
+  

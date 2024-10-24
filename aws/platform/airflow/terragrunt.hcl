@@ -7,20 +7,19 @@ terraform {
 }
 
 locals {
-  common_vars   = yamldecode(file(find_in_parent_folders("vars.yaml")))
+  platform_vars = yamldecode(file(find_in_parent_folders("platform_vars.yaml")))
   tool          = basename(get_terragrunt_dir())
-  platform      = basename(dirname(get_terragrunt_dir()))
-  resource_vars = local.common_vars["Platform-tools"]["${local.account}"]["Resources"]["${local.resource}"]
 }
 
 inputs = merge(
-  local.resource_vars["inputs"],{
-#    vpc_id             = dependecy.outputs.vpc.vpc_id
-#    private_subnet_ids = dependecy.outputs.vpc.private_subnet_ids
-#    eks_cluster_name   = dependecy.outputs.eks.eks_cluster.name
+  local.platform_vars.Platform.Tools[local.tool].inputs,
+  {
+    environment         = local.platform_vars.common.environment
+    vpc_id              = local.platform_vars.common.vpc_id
+    private_subnet_ids  = local.platform_vars.common.private_subnet_ids
+    eks_cluster_name    = local.platform_vars.common.eks_cluster_name
   }
 )
-
 
 
   
