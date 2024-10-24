@@ -1,4 +1,12 @@
 common:
+  provider: "aws"
+  statebucketsuffix: tf-state-010
+  owner: "cloudon"
+  default_region: &DefReg "us-east-2"
+  common_tags:
+    owner: "cloudon"
+    terraform: "true"
+
   vpc_id: "vpc-XXXXXXXXXXXXXX"
   private_subnet_ids: ["subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX"]
   region: &DefReg "us-east-2"
