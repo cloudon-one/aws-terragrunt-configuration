@@ -14,4 +14,13 @@ locals {
 }
 
 inputs = merge(
-  local.resource_vars["inputs"],{})
+  local.resource_vars["inputs"],{
+#    vpc_id             = dependecy.outputs.vpc.vpc_id
+#    private_subnet_ids = dependecy.outputs.vpc.private_subnet_ids
+#    eks_cluster_name   = dependecy.outputs.eks.eks_cluster.name
+  }
+)
+
+
+
+  

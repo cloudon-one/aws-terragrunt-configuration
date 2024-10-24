@@ -10,6 +10,7 @@ common:
     owner: "cloudon"
     terraform: "true"
 
+# Infrastructure as Code for Cloudon
 Environments:  
   
   master:
@@ -1307,11 +1308,18 @@ Environments:
           engine_version: "6.x"
           node_type: "cache.t4g.medium"
   
+# Platform engineering tools
 Platform-tools:
 
   airflow:
     Resources:  
       inputs:
+        environment: "dev"
+        airflow_version: "2.7.1"
+        instance_type: "t3.medium"
+        vpc_id: "vpc-XXXXXXXXXXXXXX"
+        subnet_ids: ["subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX", "subnet-XXXXXXXXXXXXXX"]
+
 
   argocd:
     Resources:
