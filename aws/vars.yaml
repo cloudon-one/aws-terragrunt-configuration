@@ -9,7 +9,6 @@ common:
     owner: "cloudon"
     terraform: "true"
 
-# Infrastructure as Code for Cloudon
 Environments:  
   
   master:
