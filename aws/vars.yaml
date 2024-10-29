@@ -1,7 +1,6 @@
 common:
   provider: "aws"
   org_id: &org_id "r-XXXXX"
-  terraform_role_arn: "arn:aws:iam::307990089504:role/terraform"
   default_region: &DefReg "us-east-2"
   eu_region: &EUReg "eu-west-2"
   statebucketsuffix: tf-state-010
@@ -1306,53 +1305,8 @@ Environments:
         inputs:
           engine_version: "6.x"
           node_type: "cache.t4g.medium"
-  
-Platform-tools:
 
-  airflow:
-    Resources:  
-      inputs:
 
-  argocd:
-    Resources:
-      inputs:
-
-  cert-manager:
-    Resources:
-      inputs:
-
-  external-dns:
-    Resources:
-      inputs:
-
-  external-secrets:
-    Resources:
-      inputs:
-
-  istio:
-    Resources:
-      inputs:
-
-  jeager:
-    Resources:
-      inputs:
-
-  karpenter:
-    Resources:
-      inputs:
-
-  kong-ingress:
-    Resources:
-      inputs:
-
-  kubecost:
-    Resources:
-      inputs:
-
-  loki-stack:
-    Resources:
-      inputs:                                    
-  
   
 
 
