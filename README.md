@@ -6,7 +6,7 @@ Below is a diagram illustrating reference AWS infra architecture:
 
 ![AWS Infra Architecture](https://github.com/cloudon-one/aws-terragrunt-configuration/blob/main/aws/aws-landing-zone.png)
 
-This diagram provides an overview of our AWS account structure and the services deployed across different organizational units (OUs):
+This diagram provides an overview of AWS account structure and the services deployed across different organizational units (OUs):
 
 - **Management OU**: Contains the Management Account for overall AWS organization management, including AWS Organizations, IAM, and billing.
 - **Network Account**: Houses core networking components like VPCs, Transit Gateway, and VPN connections.
