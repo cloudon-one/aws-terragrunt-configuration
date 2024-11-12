@@ -210,6 +210,30 @@ Environments:
             - id: "security-logs-notification"
               protocol: "sqs"
               topic: "security-log-notification" 
+      scp:
+        inputs:
+          policies:
+            - name: "dev-infra-protection"
+              description: "Dev OU protection policy"
+              policy: "policies/dev_infra.json"
+              target_ids:
+                - "ou-XXXX-XXXXXXXX"
+            - name: "dev-workloads-protection" 
+              description: "Dev OU protection policy"
+              policy: "policies/dev.json"
+              target_ids:
+                - "ou-XXXX-XXXXXXXX"  
+            - name: "global-protection"   
+              description: "Global protection policy"
+              policy: "policies/global.json"
+              target_ids:
+                - "r-XXXXX"
+            - name: "prod-infra-protection" 
+              description: "Prod OU protection policy"
+              policy: "policies/prod_infra.json"
+              target_ids:
+                - "ou-XXXX-XXXXXXXX" 
+
 
   us-dev:
     Resources:
