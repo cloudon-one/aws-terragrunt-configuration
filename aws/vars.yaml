@@ -215,22 +215,22 @@ Environments:
           policies:
             - name: "dev-infra-protection"
               description: "Dev OU protection policy"
-              policy: "policies/dev_infra.json"
+              content: "policies/dev_infra.json"
               target_ids:
                 - "ou-XXXX-XXXXXXXX"
             - name: "dev-workloads-protection" 
               description: "Dev OU protection policy"
-              policy: "policies/dev.json"
+              content: "policies/dev.json"
               target_ids:
                 - "ou-XXXX-XXXXXXXX"  
             - name: "global-protection"   
               description: "Global protection policy"
-              policy: "policies/global.json"
+              content: "policies/global.json"
               target_ids:
                 - "r-XXXXX"
             - name: "prod-infra-protection" 
               description: "Prod OU protection policy"
-              policy: "policies/prod_infra.json"
+              content: "policies/prod_infra.json"
               target_ids:
                 - "ou-XXXX-XXXXXXXX" 
 
